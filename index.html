@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IA1 – Entregables</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#121b2e; --text:#e8eefc; --muted:#b7c3e6;
+      --accent:#7c3aed; --border:rgba(255,255,255,.10); --shadow:0 12px 34px rgba(0,0,0,.40);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 18% -10%, rgba(124,58,237,.35), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(56,189,248,.15), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      border-bottom:1px solid var(--border);
+      background: rgba(11,18,32,.72);
+      backdrop-filter: blur(10px);
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:22px 18px}
+    h1{margin:0 0 6px;font-size:28px}
+    .sub{margin:0;color:var(--muted)}
+    .grid{
+      display:grid; grid-template-columns: 1fr; gap:14px; margin-top:18px;
+    }
+    @media (min-width: 820px){ .grid{grid-template-columns: 1fr 1fr;} }
+    a.card{
+      display:block;
+      text-decoration:none;
+      color:var(--text);
+      border:1px solid var(--border);
+      background: rgba(18,27,46,.78);
+      border-radius:18px;
+      padding:16px;
+      box-shadow: var(--shadow);
+      transition: transform .08s ease, border-color .2s ease, background .2s ease;
+    }
+    a.card:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.06);
+      border-color: rgba(124,58,237,.45);
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:10px;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:999px;background:var(--accent);
+      box-shadow: 0 0 0 4px rgba(124,58,237,.18);
+    }
+    h2{margin:0 0 6px;font-size:18px}
+    p{margin:0;color:var(--muted);font-size:13px}
+    footer{
+      border-top:1px solid var(--border);
+      margin-top:22px;
+      padding-top:14px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    code{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>IA1 – Entregables</h1>
+      <p class="sub">Accesos rápidos a las tareas en GitHub Pages.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <a class="card" href="./Tarea1/tarea1.html">
+        <div class="tag"><span class="dot"></span> Tarea 1</div>
+        <h2>A1.1 – Aprendizaje estadístico (Obesidad)</h2>
+        <p>Reporte con CSV, código y gráficas.</p>
+      </a>
+
+      <a class="card" href="./Tarea2/Tarea2.html">
+        <div class="tag"><span class="dot"></span> Tarea 2</div>
+        <h2>A1.2 – Regresión lineal (Felicidad vs GDP)</h2>
+        <p>Modelo simple y múltiple + tabla del CSV + gráficos.</p>
+      </a>
+
+      <a class="card" href="./Tarea3/Tarea3.html">
+        <div class="tag"><span class="dot"></span> Tarea 3</div>
+        <h2>A1.3 – Regresión múltiple (Calificaciones)</h2>
+        <p>Predicción de G3 + correlación + evaluación train/test.</p>
+      </a>
+
+      <a class="card" href="./README.md">
+        <div class="tag"><span class="dot"></span> Repo</div>
+        <h2>README</h2>
+        <p>Descripción del repositorio (GitHub).</p>
+      </a>
+    </div>
+
+    <footer>
+      Si algún link no abre, revisa que el nombre del archivo coincida exactamente (mayúsculas/acentos).
+      En tu caso: <code>/Tarea1/tarea1.html</code>, <code>/Tarea2/Tarea2.html</code>, <code>/Tarea3/Tarea3.html</code>.
+    </footer>
+  </main>
+</body>
+</html>
