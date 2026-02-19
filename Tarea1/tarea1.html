@@ -1,1 +1,849 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tarea 1 – Actividad A1.1 (Reporte completo)</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121b2e;
+      --text:#e8eefc;
+      --muted:#b7c3e6;
+      --accent:#7c3aed;
+      --border:rgba(255,255,255,.10);
+      --shadow:0 12px 34px rgba(0,0,0,.40);
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 18% -10%, rgba(124,58,237,.35), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(56,189,248,.15), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(11,18,32,.72);
+      border-bottom: 1px solid var(--border);
+    }
+    nav{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      justify-content: space-between;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800; letter-spacing:.2px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(124,58,237,.18);
+    }
+    .nav-links{
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    a.btn, button.btn, .chip{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 12px;
+      text-decoration:none;
+      font-size:14px;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+    }
+    a.btn:hover, button.btn:hover, .chip:hover{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(124,58,237,.45);
+      transform: translateY(-1px);
+    }
+    a.btn.primary{
+      background: rgba(124,58,237,.18);
+      border-color: rgba(124,58,237,.55);
+    }
 
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 18px 64px;
+    }
+    .hero{
+      padding: 26px 22px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    h1{ margin:0 0 6px; font-size: 28px; }
+    .subtitle{ margin:0; color: var(--muted); }
+
+    .grid{
+      margin-top: 16px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media (min-width: 980px){
+      .grid{ grid-template-columns: 1fr 1fr; }
+      .span-2{ grid-column: 1 / -1; }
+    }
+
+    section.card{
+      border: 1px solid var(--border);
+      background: rgba(18,27,46,.78);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .anchor{ scroll-margin-top: 86px; }
+
+    h2{ margin:0 0 10px; font-size: 18px; }
+    h3{ margin:0 0 10px; font-size: 16px; }
+    p{ margin: 0 0 10px; }
+    .muted{ color: var(--muted); }
+
+    .callout{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(124,58,237,.55);
+      background: rgba(124,58,237,.10);
+    }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (min-width: 980px){
+      .kpi{ grid-template-columns: 1fr 1fr 1fr; }
+    }
+    .kpi .box{
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(11,18,32,.45);
+    }
+    .kpi .label{ color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+    .kpi .value{ font-weight: 800; font-size: 16px; }
+    .kpi .sub{ color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+    /* Table */
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin: 10px 0 12px;
+    }
+    input[type="search"]{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      outline:none;
+      min-width: 260px;
+    }
+    input[type="search"]::placeholder{ color: rgba(183,195,230,.7); }
+    .pill{
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+    .tablewrap{
+      overflow:auto;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background: rgba(11,18,32,.30);
+    }
+    table{
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 980px;
+    }
+    th, td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      text-align:left;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    th{
+      position: sticky;
+      top: 0;
+      background: rgba(11,18,32,.85);
+      cursor: pointer;
+      user-select:none;
+    }
+    tr:hover td{ background: rgba(255,255,255,.03); }
+    .pager{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      margin-top: 12px;
+    }
+    select{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 9px 10px;
+      border-radius: 12px;
+      outline:none;
+    }
+
+    /* Code blocks */
+    .codebox{
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(11,18,32,.55);
+    }
+    .codehead{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      gap:12px;
+    }
+    .codetitle{ font-weight:800; font-size:13px; color: var(--muted); }
+    pre{
+      margin:0;
+      overflow:auto;
+      padding: 12px;
+    }
+    code{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12.5px;
+    }
+
+    /* Charts */
+    .chartgrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    @media (min-width: 980px){
+      .chartgrid{ grid-template-columns: 1fr 1fr; }
+    }
+    canvas{
+      width:100%;
+      height: 360px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(11,18,32,.45);
+    }
+    .legend{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .legend .dot{
+      width:8px; height:8px; box-shadow:none;
+      background: rgba(56,189,248,.85);
+    }
+
+    .footer{
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+    .small{ font-size: 12.5px; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <div class="brand">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Tarea 1 – A1.1</span>
+      </div>
+      <div class="nav-links">
+        <a class="btn primary" href="../index.html">← Regresar a index.html</a>
+        <a class="chip" href="#descripcion">Descripción</a>
+        <a class="chip" href="#dataset">CSV</a>
+        <a class="chip" href="#estadistica">Estadística</a>
+        <a class="chip" href="#codigo">Código</a>
+        <a class="chip" href="#graficas">Gráficas</a>
+        <a class="chip" href="#archivos">Archivos</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero anchor" id="descripcion">
+      <h1>Actividad A1.1 – Reporte completo (CSV + Código + Gráficas)</h1>
+      <p class="subtitle">
+        Análisis exploratorio de un dataset de obesidad (Colombia, Perú y México) usando Python (pandas/matplotlib).
+        Este reporte carga el CSV directamente desde esta carpeta y genera tabla, estadísticas y gráficas en el navegador.
+      </p>
+      <div class="callout">
+        <div><strong>Variable de interés:</strong> <span id="targetName">NivelDeObesidad</span></div>
+        <div class="small muted" style="margin-top:6px">
+          CSV: <code>A1.1 Obesidad.csv</code> · Notebook: <code>A1_Andres_Siqueiros (1).ipynb</code> · PDF: <code>Actividad A1 (1).pdf</code>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card span-2 anchor" id="dataset">
+        <h2>1) Dataset (CSV) – Tabla completa</h2>
+        <p class="muted">
+          Buscador global + ordenamiento por columna + paginación. Los datos se leen desde <code>A1.1 Obesidad.csv</code>.
+        </p>
+
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="Buscar en todas las columnas…" oninput="applyFilter()" />
+          <span class="pill" id="statusPill">Cargando CSV…</span>
+          <span class="pill" id="rowsPill">Filas: —</span>
+          <span class="pill" id="colsPill">Columnas: —</span>
+        </div>
+
+        <div class="tablewrap">
+          <table id="dataTable">
+            <thead><tr id="theadRow"></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="pager">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+            <button class="btn" onclick="prevPage()">← Anterior</button>
+            <button class="btn" onclick="nextPage()">Siguiente →</button>
+            <span class="pill" id="pagePill">Página —</span>
+            <span class="pill" id="showingPill">Mostrando —</span>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+            <span class="pill">Filas por página</span>
+            <select id="pageSize" onchange="setPageSize()">
+              <option>25</option>
+              <option selected>50</option>
+              <option>100</option>
+              <option>200</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="card anchor" id="estadistica">
+        <h2>2) Estadística descriptiva</h2>
+        <p class="muted">Medias, medianas y modas calculadas desde el CSV cargado.</p>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="label">Peso</div>
+            <div class="value" id="pesoKpi">—</div>
+            <div class="sub" id="pesoSub">—</div>
+          </div>
+          <div class="box">
+            <div class="label">Estatura</div>
+            <div class="value" id="estKpi">—</div>
+            <div class="sub" id="estSub">—</div>
+          </div>
+          <div class="box">
+            <div class="label">ConsumoDeAgua</div>
+            <div class="value" id="aguaKpi">—</div>
+            <div class="sub" id="aguaSub">—</div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Diseño del estudio (mejora propuesta):</strong> agregar <em>HorasDeActividadFisicaPorSemana</em> (cuantitativa)
+          para medir “dosis” de ejercicio y comparar mejor contra <em>NivelDeObesidad</em>.
+        </div>
+      </section>
+
+      <section class="card anchor" id="codigo">
+        <h2>3) Código (del notebook)</h2>
+        <p class="muted">
+          Se extraen celdas de código del archivo <code>A1_Andres_Siqueiros (1).ipynb</code> y se muestran aquí.
+        </p>
+
+        <div class="codebox">
+          <div class="codehead">
+            <div class="codetitle">Celdas (auto-detectadas por palabras clave)</div>
+            <button class="btn" onclick="copyAllCode()">Copiar todo</button>
+          </div>
+          <pre><code id="codeDump">Cargando notebook…</code></pre>
+        </div>
+
+        <div class="callout small">
+          Palabras clave usadas para seleccionar celdas relevantes: <code>read_csv</code>, <code>mean</code>, <code>median</code>, <code>mode</code>, <code>IMC</code>, <code>scatter</code>, <code>plt</code>.
+        </div>
+      </section>
+
+      <section class="card span-2 anchor" id="graficas">
+        <h2>4) Gráficas generadas (desde el CSV)</h2>
+        <p class="muted">
+          Se calculan en el navegador: IMC = Peso / (Estatura²). Luego se filtra <em>Sexo = Male</em>.
+        </p>
+
+        <div class="chartgrid">
+          <div>
+            <h3>IMC vs Edad (Hombres)</h3>
+            <canvas id="chart1" width="1200" height="540"></canvas>
+            <div class="legend"><span class="dot"></span> Puntos (hombres)</div>
+          </div>
+          <div>
+            <h3>Estatura vs Peso (Hombres)</h3>
+            <canvas id="chart2" width="1200" height="540"></canvas>
+            <div class="legend"><span class="dot"></span> Puntos (hombres)</div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Lectura rápida:</strong>
+          En IMC vs Edad suele concentrarse la muestra en edades jóvenes (≈18–35) sin una relación lineal perfecta.
+          En Estatura vs Peso se observa tendencia positiva con dispersión (otras variables influyen).
+        </div>
+      </section>
+
+      <section class="card span-2 anchor" id="archivos">
+        <h2>5) Archivos del entregable</h2>
+        <ul class="small">
+          <li><a class="btn" href="./A1.1%20Obesidad.csv" target="_blank" rel="noopener">Abrir CSV</a></li>
+          <li><a class="btn" href="./A1_Andres_Siqueiros%20(1).ipynb" target="_blank" rel="noopener">Abrir Notebook (.ipynb)</a></li>
+          <li><a class="btn" href="./Actividad%20A1%20(1).pdf" target="_blank" rel="noopener">Abrir PDF</a></li>
+        </ul>
+        <div class="footer">
+          Si el botón “Regresar a index.html” no abre, revisa que exista <code>index.html</code> en la raíz del repositorio.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // =========================
+    // Utilidades
+    // =========================
+    function fmt(n, d=4){
+      if (n === null || n === undefined || Number.isNaN(n)) return "—";
+      const x = Number(n);
+      if (Number.isNaN(x)) return String(n);
+      return x.toFixed(d);
+    }
+    function toNum(v){
+      if (v === null || v === undefined) return NaN;
+      if (typeof v === "number") return v;
+      const s = String(v).trim();
+      if (!s) return NaN;
+      const x = Number(s);
+      return Number.isNaN(x) ? NaN : x;
+    }
+    function median(arr){
+      const a = arr.slice().sort((x,y)=>x-y);
+      const n = a.length;
+      if (!n) return NaN;
+      const mid = Math.floor(n/2);
+      return n%2 ? a[mid] : (a[mid-1]+a[mid])/2;
+    }
+    function mode(arr){
+      const m = new Map();
+      for (const x of arr){
+        const k = String(x);
+        m.set(k, (m.get(k)||0)+1);
+      }
+      let bestK = null, bestV = -1;
+      for (const [k,v] of m.entries()){
+        if (v > bestV){
+          bestV = v; bestK = k;
+        }
+      }
+      const num = Number(bestK);
+      return Number.isNaN(num) ? bestK : num;
+    }
+
+    // CSV parser (maneja comillas y comas)
+    function parseCSV(text){
+      const rows = [];
+      let row = [];
+      let cur = "";
+      let inQuotes = false;
+
+      for (let i=0; i<text.length; i++){
+        const c = text[i];
+
+        if (c === '"'){
+          const next = text[i+1];
+          if (inQuotes && next === '"'){ // escape ""
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+          continue;
+        }
+
+        if (!inQuotes && (c === ',')){
+          row.push(cur);
+          cur = "";
+          continue;
+        }
+
+        if (!inQuotes && (c === '\n' || c === '\r')){
+          if (c === '\r' && text[i+1] === '\n') i++; // CRLF
+          row.push(cur);
+          cur = "";
+          if (row.length === 1 && row[0] === ""){ row = []; continue; }
+          rows.push(row);
+          row = [];
+          continue;
+        }
+
+        cur += c;
+      }
+
+      if (cur.length || row.length){
+        row.push(cur);
+        rows.push(row);
+      }
+
+      return rows;
+    }
+
+    // =========================
+    // Tabla: búsqueda, sort, paginación
+    // =========================
+    let DATA = [];
+    let COLUMNS = [];
+    let filtered = [];
+    let page = 1;
+    let pageSize = 50;
+    let sortKey = null;
+    let sortDir = 1;
+
+    function renderHeader(){
+      const tr = document.getElementById("theadRow");
+      tr.innerHTML = "";
+      COLUMNS.forEach(col => {
+        const th = document.createElement("th");
+        th.textContent = col + (sortKey === col ? (sortDir === 1 ? " ▲" : " ▼") : "");
+        th.title = "Ordenar por " + col;
+        th.onclick = () => sortBy(col);
+        tr.appendChild(th);
+      });
+    }
+
+    function renderTable(){
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (page > totalPages) page = totalPages;
+
+      const start = (page - 1) * pageSize;
+      const end = Math.min(start + pageSize, total);
+      const slice = filtered.slice(start, end);
+
+      for (const row of slice){
+        const tr = document.createElement("tr");
+        for (const col of COLUMNS){
+          const td = document.createElement("td");
+          td.textContent = (row[col] ?? "").toString();
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+
+      document.getElementById("pagePill").textContent = "Página " + page + " / " + totalPages;
+      document.getElementById("showingPill").textContent = total ? ("Mostrando " + (start+1) + "–" + end + " de " + total) : "Mostrando —";
+    }
+
+    function applyFilter(){
+      const q = document.getElementById("search").value.trim().toLowerCase();
+      if (!q){
+        filtered = DATA.slice();
+      } else {
+        filtered = DATA.filter(r => COLUMNS.some(c => String(r[c] ?? "").toLowerCase().includes(q)));
+      }
+      page = 1;
+      if (sortKey) sortBy(sortKey, true);
+      renderHeader();
+      renderTable();
+    }
+
+    function sortBy(col, silent=false){
+      if (sortKey === col) sortDir *= -1;
+      else { sortKey = col; sortDir = 1; }
+
+      const dir = sortDir;
+      filtered.sort((a,b)=>{
+        const av = a[col], bv = b[col];
+        const an = toNum(av), bn = toNum(bv);
+        const aNum = !Number.isNaN(an);
+        const bNum = !Number.isNaN(bn);
+        if (aNum && bNum) return (an - bn) * dir;
+        const as = String(av ?? "").toLowerCase();
+        const bs = String(bv ?? "").toLowerCase();
+        if (as < bs) return -1 * dir;
+        if (as > bs) return 1 * dir;
+        return 0;
+      });
+
+      if (!silent) renderHeader();
+      renderTable();
+    }
+
+    function nextPage(){ page++; renderTable(); }
+    function prevPage(){ page = Math.max(1, page-1); renderTable(); }
+    function setPageSize(){
+      pageSize = Number(document.getElementById("pageSize").value);
+      page = 1;
+      renderTable();
+    }
+
+    // =========================
+    // Estadística desde CSV
+    // =========================
+    function computeStats(){
+      const peso = DATA.map(r => toNum(r["Peso"])).filter(x => !Number.isNaN(x));
+      const est  = DATA.map(r => toNum(r["Estatura"])).filter(x => !Number.isNaN(x));
+      const agua = DATA.map(r => toNum(r["ConsumoDeAgua"])).filter(x => !Number.isNaN(x));
+
+      const pesoMean = peso.reduce((s,x)=>s+x,0)/peso.length;
+      const estMean  = est.reduce((s,x)=>s+x,0)/est.length;
+      const aguaMean = agua.reduce((s,x)=>s+x,0)/agua.length;
+
+      const pesoMed = median(peso);
+      const estMed  = median(est);
+      const aguaMed = median(agua);
+
+      const pesoMode = mode(peso);
+      const estMode  = mode(est);
+      const aguaMode = mode(agua);
+
+      document.getElementById("pesoKpi").textContent = "Media: " + fmt(pesoMean,4);
+      document.getElementById("pesoSub").textContent = "Mediana: " + fmt(pesoMed,4) + " · Moda: " + pesoMode;
+
+      document.getElementById("estKpi").textContent = "Media: " + fmt(estMean,4);
+      document.getElementById("estSub").textContent = "Mediana: " + fmt(estMed,4) + " · Moda: " + estMode;
+
+      document.getElementById("aguaKpi").textContent = "Media: " + fmt(aguaMean,4);
+      document.getElementById("aguaSub").textContent = "Mediana: " + fmt(aguaMed,4) + " · Moda: " + aguaMode;
+    }
+
+    // =========================
+    // Gráficas (Canvas scatter)
+    // =========================
+    function drawScatter(canvasId, points, xLabel, yLabel){
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext("2d");
+
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const padL = 74, padR = 18, padT = 18, padB = 56;
+
+      const xs = points.map(p=>p.x);
+      const ys = points.map(p=>p.y);
+      const xMin = Math.min(...xs), xMax = Math.max(...xs);
+      const yMin = Math.min(...ys), yMax = Math.max(...ys);
+
+      const fx = (x) => padL + ( (x - xMin) / (xMax - xMin || 1) ) * (W - padL - padR);
+      const fy = (y) => (H - padB) - ( (y - yMin) / (yMax - yMin || 1) ) * (H - padT - padB);
+
+      // Fondo suave
+      ctx.fillStyle = "rgba(255,255,255,0.02)";
+      ctx.fillRect(padL, padT, W - padL - padR, H - padT - padB);
+
+      // Ejes
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padL, padT);
+      ctx.lineTo(padL, H - padB);
+      ctx.lineTo(W - padR, H - padB);
+      ctx.stroke();
+
+      // Grid (5 líneas)
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.setLineDash([4,6]);
+      for (let i=1;i<=4;i++){
+        const y = padT + i*(H - padT - padB)/5;
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+      }
+      for (let i=1;i<=4;i++){
+        const x = padL + i*(W - padL - padR)/5;
+        ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, H - padB); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      // Etiquetas
+      ctx.fillStyle = "rgba(183,195,230,0.95)";
+      ctx.font = "14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(xLabel, Math.floor((padL + (W-padR))/2) - 30, H - 18);
+
+      ctx.save();
+      ctx.translate(18, Math.floor((padT + (H-padB))/2) + 30);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      // Ticks (min/max)
+      ctx.font = "12px ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace";
+      ctx.fillStyle = "rgba(183,195,230,0.90)";
+      ctx.fillText(String(xMin.toFixed(2)), padL, H - padB + 18);
+      ctx.fillText(String(xMax.toFixed(2)), W - padR - 60, H - padB + 18);
+      ctx.fillText(String(yMin.toFixed(2)), 10, H - padB);
+      ctx.fillText(String(yMax.toFixed(2)), 10, padT + 12);
+
+      // Puntos
+      ctx.fillStyle = "rgba(56,189,248,0.70)";
+      for (const p of points){
+        const x = fx(p.x), y = fy(p.y);
+        ctx.beginPath();
+        ctx.arc(x, y, 2.2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    function buildCharts(){
+      const males = DATA.filter(r => String(r["Sexo"] ?? "").toLowerCase() === "male");
+
+      const pts1 = [];
+      const pts2 = [];
+
+      for (const r of males){
+        const edad = toNum(r["Edad"]);
+        const peso = toNum(r["Peso"]);
+        const est  = toNum(r["Estatura"]);
+        if (!Number.isNaN(edad) && !Number.isNaN(peso) && !Number.isNaN(est) && est !== 0){
+          const imc = peso / (est*est);
+          pts1.push({x: edad, y: imc});
+          pts2.push({x: est, y: peso});
+        }
+      }
+
+      if (pts1.length) drawScatter("chart1", pts1, "Edad", "IMC");
+      if (pts2.length) drawScatter("chart2", pts2, "Estatura", "Peso");
+    }
+
+    // =========================
+    // Notebook: extraer celdas relevantes
+    // =========================
+    function isRelevantCell(src){
+      const s = src.toLowerCase();
+      const keys = ["read_csv", ".mean", ".median", ".mode", "imc", "plt", "scatter", "matplotlib", "pandas"];
+      return keys.some(k => s.includes(k));
+    }
+
+    async function loadNotebook(){
+      try{
+        const res = await fetch("./A1_Andres_Siqueiros%20(1).ipynb", {cache:"no-store"});
+        if (!res.ok) throw new Error("No se pudo cargar el notebook");
+        const nb = await res.json();
+        const cells = Array.isArray(nb.cells) ? nb.cells : [];
+        const codeCells = cells.filter(c => c.cell_type === "code");
+
+        const out = [];
+        for (const c of codeCells){
+          const src = Array.isArray(c.source) ? c.source.join("") : (c.source ?? "");
+          if (src && isRelevantCell(src)){
+            out.push(src.trim());
+          }
+        }
+
+        const text = out.length ? out.join("\n\n# -------------------------\n\n") : "No se detectaron celdas relevantes automáticamente.";
+        document.getElementById("codeDump").textContent = text;
+      } catch(e){
+        document.getElementById("codeDump").textContent =
+          "No se pudo cargar el notebook (revisa que el archivo esté en la misma carpeta y que GitHub Pages esté activo).";
+      }
+    }
+
+    async function copyAllCode(){
+      const text = document.getElementById("codeDump").textContent;
+      try{
+        await navigator.clipboard.writeText(text);
+      } catch(e){
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+    }
+
+    // =========================
+    // Cargar CSV y arrancar todo
+    // =========================
+    async function loadCSV(){
+      const status = document.getElementById("statusPill");
+      try{
+        const res = await fetch("./A1.1%20Obesidad.csv", {cache:"no-store"});
+        if (!res.ok) throw new Error("No se pudo cargar el CSV");
+        const text = await res.text();
+
+        const rows = parseCSV(text);
+        if (!rows.length) throw new Error("CSV vacío");
+
+        COLUMNS = rows[0].map(x => x.trim());
+        const data = [];
+        for (let i=1;i<rows.length;i++){
+          const r = rows[i];
+          if (!r || !r.length) continue;
+          const obj = {};
+          for (let j=0;j<COLUMNS.length;j++){
+            obj[COLUMNS[j]] = (r[j] ?? "").trim();
+          }
+          data.push(obj);
+        }
+
+        DATA = data;
+        filtered = DATA.slice();
+
+        document.getElementById("rowsPill").textContent = "Filas: " + DATA.length;
+        document.getElementById("colsPill").textContent = "Columnas: " + COLUMNS.length;
+        status.textContent = "CSV cargado";
+        status.style.borderColor = "rgba(34,197,94,.45)";
+
+        renderHeader();
+        renderTable();
+        computeStats();
+        buildCharts();
+      } catch(e){
+        status.textContent = "Error al cargar CSV";
+        status.style.borderColor = "rgba(239,68,68,.55)";
+        document.getElementById("rowsPill").textContent = "Filas: —";
+        document.getElementById("colsPill").textContent = "Columnas: —";
+      }
+    }
+
+    loadCSV();
+    loadNotebook();
+  </script>
+</body>
+</html>
