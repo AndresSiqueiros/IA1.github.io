@@ -1,1 +1,972 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tarea 2 – A1.2 Regresión lineal (Felicidad vs GDP y variables)</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#121b2e; --text:#e8eefc; --muted:#b7c3e6;
+      --accent:#7c3aed; --border:rgba(255,255,255,.10);
+      --shadow:0 12px 34px rgba(0,0,0,.40);
+      --good:#22c55e; --bad:#ef4444;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 18% -10%, rgba(124,58,237,.35), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(56,189,248,.15), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(11,18,32,.72);
+      border-bottom: 1px solid var(--border);
+    }
+    nav{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      justify-content: space-between;
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2px}
+    .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);box-shadow:0 0 0 4px rgba(124,58,237,.18)}
+    .nav-links{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    a.btn, button.btn, .chip{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 12px;
+      text-decoration:none;
+      font-size:14px;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+    }
+    a.btn:hover, button.btn:hover, .chip:hover{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(124,58,237,.45);
+      transform: translateY(-1px);
+    }
+    a.btn.primary{
+      background: rgba(124,58,237,.18);
+      border-color: rgba(124,58,237,.55);
+    }
 
+    main{max-width:1180px;margin:0 auto;padding:28px 18px 64px}
+    .hero{
+      padding: 26px 22px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    h1{margin:0 0 6px;font-size:28px}
+    .subtitle{margin:0;color:var(--muted)}
+    .callout{
+      margin-top:12px;
+      padding:12px;
+      border-radius:14px;
+      border: 1px dashed rgba(124,58,237,.55);
+      background: rgba(124,58,237,.10);
+    }
+    .grid{margin-top:16px;display:grid;grid-template-columns:1fr;gap:14px}
+    @media (min-width: 980px){
+      .grid{grid-template-columns: 1fr 1fr;}
+      .span-2{grid-column: 1 / -1;}
+    }
+    section.card{
+      border: 1px solid var(--border);
+      background: rgba(18,27,46,.78);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .anchor{scroll-margin-top: 86px;}
+    h2{margin:0 0 10px;font-size:18px}
+    h3{margin:0 0 10px;font-size:16px}
+    p{margin:0 0 10px}
+    .muted{color:var(--muted)}
+    .pill{
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+
+    /* Table */
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 12px}
+    input[type="search"]{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      background: rgba(255,255,255,.04);color: var(--text);outline:none;min-width:260px;
+    }
+    input[type="search"]::placeholder{color: rgba(183,195,230,.7)}
+    .tablewrap{
+      overflow:auto;border:1px solid var(--border);border-radius:14px;background: rgba(11,18,32,.30);
+    }
+    table{border-collapse:collapse;width:100%;min-width:980px}
+    th, td{
+      padding:10px 10px;border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;font-size:13px;white-space:nowrap;
+    }
+    th{
+      position:sticky;top:0;background: rgba(11,18,32,.85);
+      cursor:pointer;user-select:none;
+    }
+    tr:hover td{background: rgba(255,255,255,.03)}
+    .pager{
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-top:12px
+    }
+    select{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 9px 10px;
+      border-radius: 12px;
+      outline:none;
+    }
+
+    /* Code blocks */
+    .codebox{
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(11,18,32,.55);
+    }
+    .codehead{
+      display:flex;justify-content:space-between;align-items:center;padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.08);gap:12px;
+    }
+    .codetitle{font-weight:800;font-size:13px;color:var(--muted)}
+    pre{margin:0;overflow:auto;padding:12px}
+    code{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:12.5px}
+
+    /* Charts */
+    .chartgrid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:12px}
+    @media (min-width: 980px){ .chartgrid{grid-template-columns:1fr 1fr;} }
+    canvas{
+      width:100%;
+      height: 360px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(11,18,32,.45);
+    }
+
+    /* KPI */
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (min-width: 980px){ .kpi{grid-template-columns: 1fr 1fr 1fr 1fr;} }
+    .kpi .box{
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(11,18,32,.45);
+    }
+    .kpi .label{color:var(--muted);font-size:13px;margin-bottom:6px}
+    .kpi .value{font-weight:900;font-size:16px}
+    .kpi .sub{color:var(--muted);font-size:12px;margin-top:6px}
+    .ok{border-color: rgba(34,197,94,.45)!important}
+    .bad{border-color: rgba(239,68,68,.55)!important}
+
+    .footer{
+      margin-top:18px;color:var(--muted);font-size:13px;border-top:1px solid var(--border);padding-top:14px
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <div class="brand"><span class="dot" aria-hidden="true"></span><span>Tarea 2 – A1.2</span></div>
+      <div class="nav-links">
+        <a class="btn primary" href="../index.html">← Regresar a index.html</a>
+        <a class="chip" href="#descripcion">Descripción</a>
+        <a class="chip" href="#dataset">CSV</a>
+        <a class="chip" href="#modelos">Modelos</a>
+        <a class="chip" href="#codigo">Código</a>
+        <a class="chip" href="#graficas">Gráficas</a>
+        <a class="chip" href="#archivos">Archivos</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero anchor" id="descripcion">
+      <h1>A1.2 – Regresión lineal: Felicidad vs variables socioeconómicas</h1>
+      <p class="subtitle">
+        Análisis de la relación entre felicidad (<strong>Happiness</strong>) y variables como <strong>GDP per capita</strong>,
+        <strong>Family</strong>, <strong>Health</strong> y <strong>Trust</strong>, comparando un modelo simple contra un modelo múltiple.
+      </p>
+      <div class="callout">
+        <div><strong>Variable dependiente:</strong> Happiness</div>
+        <div><strong>Variables explicativas:</strong> GDP, Family, Health, Trust</div>
+        <div class="muted" style="margin-top:6px">
+          Fuente del análisis: base del World Happiness Report (154 países).
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card span-2 anchor" id="dataset">
+        <h2>1) Dataset (CSV) – Tabla completa</h2>
+        <p class="muted">
+          Tabla con búsqueda, ordenamiento y paginación. Se lee el archivo <code>A1.2 Felicidad y GDP.csv</code>.
+        </p>
+
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="Buscar en todas las columnas…" oninput="applyFilter()" />
+          <span class="pill" id="statusPill">Cargando CSV…</span>
+          <span class="pill" id="rowsPill">Filas: —</span>
+          <span class="pill" id="colsPill">Columnas: —</span>
+          <span class="pill" id="cleanPill">Limpias: —</span>
+        </div>
+
+        <div class="tablewrap">
+          <table id="dataTable">
+            <thead><tr id="theadRow"></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="pager">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+            <button class="btn" onclick="prevPage()">← Anterior</button>
+            <button class="btn" onclick="nextPage()">Siguiente →</button>
+            <span class="pill" id="pagePill">Página —</span>
+            <span class="pill" id="showingPill">Mostrando —</span>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+            <span class="pill">Filas por página</span>
+            <select id="pageSize" onchange="setPageSize()">
+              <option>25</option>
+              <option selected>50</option>
+              <option>100</option>
+              <option>200</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="card anchor" id="modelos">
+        <h2>2) Modelos y resultados (calculados desde el CSV)</h2>
+        <p class="muted">
+          Se aplica limpieza eliminando filas con valores 0 en GDP, Health y Family, y se calcula <code>log_GDP</code>.
+        </p>
+
+        <div class="kpi">
+          <div class="box" id="kpiN">
+            <div class="label">N (muestra limpia)</div>
+            <div class="value" id="kpiNVal">—</div>
+            <div class="sub">Filas usadas en modelos</div>
+          </div>
+          <div class="box" id="kpiR2S">
+            <div class="label">Modelo simple (Happiness ~ GDP)</div>
+            <div class="value" id="kpiR2SVal">R²: —</div>
+            <div class="sub" id="kpiR2SSub">β0: — · β1: —</div>
+          </div>
+          <div class="box" id="kpiR2M">
+            <div class="label">Modelo múltiple (Happiness ~ log_GDP + Family + Health + Trust)</div>
+            <div class="value" id="kpiR2MVal">R²: —</div>
+            <div class="sub" id="kpiR2MSub">Coeficientes: —</div>
+          </div>
+          <div class="box" id="kpiRMSE">
+            <div class="label">Ajuste (RMSE)</div>
+            <div class="value" id="kpiRMSEVal">—</div>
+            <div class="sub">Error en Happiness (muestra limpia)</div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Interpretación rápida:</strong> el modelo simple suele mostrar relación positiva entre GDP y felicidad,
+          pero la dispersión indica que no explica todo. El modelo múltiple integra dimensiones sociales, salud e institucionales
+          y suele mejorar sustancialmente el ajuste.
+        </div>
+      </section>
+
+      <section class="card anchor">
+        <h2>3) Coeficientes del modelo múltiple</h2>
+        <p class="muted">Tabla estimada por OLS (mínimos cuadrados ordinarios).</p>
+
+        <div class="tablewrap" style="min-width:auto">
+          <table style="min-width: 720px;">
+            <thead>
+              <tr>
+                <th>Variable</th>
+                <th>Coeficiente</th>
+                <th>Error estándar</th>
+                <th>t</th>
+                <th>p (aprox.)</th>
+              </tr>
+            </thead>
+            <tbody id="coefBody">
+              <tr><td colspan="5" class="muted">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout muted" style="margin-top:12px">
+          p (aprox.) usando aproximación normal (muestra grande).
+        </div>
+      </section>
+
+      <section class="card anchor" id="codigo">
+        <h2>4) Código (del notebook)</h2>
+        <p class="muted">Se leen celdas relevantes del archivo <code>A1_2_Regresion_Lineal (1).ipynb</code>.</p>
+
+        <div class="codebox">
+          <div class="codehead">
+            <div class="codetitle">Celdas detectadas</div>
+            <button class="btn" onclick="copyAllCode()">Copiar todo</button>
+          </div>
+          <pre><code id="codeDump">Cargando notebook…</code></pre>
+        </div>
+      </section>
+
+      <section class="card span-2 anchor" id="graficas">
+        <h2>5) Gráficas (generadas desde el CSV)</h2>
+        <p class="muted">
+          (1) Regresión simple: dispersión Happiness vs GDP con línea ajustada. (2) Histograma: distribución de log(GDP).
+          (3) Ajuste del modelo múltiple: Happiness real vs Happiness estimada.
+        </p>
+
+        <div class="chartgrid">
+          <div>
+            <h3>Regresión lineal simple (Happiness vs GDP)</h3>
+            <canvas id="c1" width="1200" height="540"></canvas>
+          </div>
+          <div>
+            <h3>Distribución del log(GDP)</h3>
+            <canvas id="c2" width="1200" height="540"></canvas>
+          </div>
+          <div class="span-2">
+            <h3>Ajuste del modelo múltiple (Real vs Estimada)</h3>
+            <canvas id="c3" width="1200" height="540"></canvas>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Lectura rápida:</strong> puntos más cerca de la diagonal en Real vs Estimada indican mejor ajuste del modelo múltiple.
+        </div>
+      </section>
+
+      <section class="card span-2 anchor" id="archivos">
+        <h2>6) Archivos del entregable</h2>
+        <ul style="margin:8px 0 0 18px">
+          <li><a class="btn" href="./A1.2%20Felicidad%20y%20GDP.csv" target="_blank" rel="noopener">Abrir CSV</a></li>
+          <li><a class="btn" href="./A1_2_Regresion_Lineal%20(1).ipynb" target="_blank" rel="noopener">Abrir Notebook (.ipynb)</a></li>
+          <li><a class="btn" href="./A1.2%20Regresi%C3%B3n%20lineal%20(1).pdf" target="_blank" rel="noopener">Abrir PDF</a></li>
+        </ul>
+        <div class="footer">
+          Si algún botón no abre, revisa que GitHub Pages esté activo y que los nombres coincidan (mayúsculas/acentos/espacios).
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // ===========
+    // Helpers numéricos
+    // ===========
+    function toNum(v){
+      if (v === null || v === undefined) return NaN;
+      if (typeof v === "number") return v;
+      const s = String(v).trim();
+      if (!s) return NaN;
+      const x = Number(s);
+      return Number.isNaN(x) ? NaN : x;
+    }
+    function fmt(n, d=4){
+      if (n === null || n === undefined || Number.isNaN(n)) return "—";
+      return Number(n).toFixed(d);
+    }
+    function mean(arr){
+      if (!arr.length) return NaN;
+      return arr.reduce((s,x)=>s+x,0)/arr.length;
+    }
+    function rmse(y, yhat){
+      let s = 0, n = 0;
+      for (let i=0;i<y.length;i++){
+        const e = y[i] - yhat[i];
+        s += e*e; n++;
+      }
+      return Math.sqrt(s/(n||1));
+    }
+
+    // Normal CDF approx
+    function erf(x){
+      // Abramowitz-Stegun approximation
+      const sign = x < 0 ? -1 : 1;
+      x = Math.abs(x);
+      const a1 =  0.254829592, a2 = -0.284496736, a3 =  1.421413741,
+            a4 = -1.453152027, a5 =  1.061405429, p  =  0.3275911;
+      const t = 1/(1+p*x);
+      const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+      return sign*y;
+    }
+    function normCdf(x){ return 0.5*(1+erf(x/Math.SQRT2)); }
+    function pval2sided_from_t(t){ return 2*(1 - normCdf(Math.abs(t))); }
+
+    // ===========
+    // CSV parser
+    // ===========
+    function parseCSV(text){
+      const rows = [];
+      let row = [], cur = "", inQuotes = false;
+
+      for (let i=0; i<text.length; i++){
+        const c = text[i];
+
+        if (c === '"'){
+          const next = text[i+1];
+          if (inQuotes && next === '"'){ cur += '"'; i++; }
+          else inQuotes = !inQuotes;
+          continue;
+        }
+        if (!inQuotes && c === ','){
+          row.push(cur); cur = ""; continue;
+        }
+        if (!inQuotes && (c === '\n' || c === '\r')){
+          if (c === '\r' && text[i+1] === '\n') i++;
+          row.push(cur); cur = "";
+          if (!(row.length === 1 && row[0] === "")) rows.push(row);
+          row = [];
+          continue;
+        }
+        cur += c;
+      }
+      if (cur.length || row.length){ row.push(cur); rows.push(row); }
+      return rows;
+    }
+
+    // ===========
+    // Tabla: filtro, sort, paginación
+    // ===========
+    let DATA = [];
+    let COLUMNS = [];
+    let filtered = [];
+    let page = 1;
+    let pageSize = 50;
+    let sortKey = null;
+    let sortDir = 1;
+
+    function renderHeader(){
+      const tr = document.getElementById("theadRow");
+      tr.innerHTML = "";
+      COLUMNS.forEach(col => {
+        const th = document.createElement("th");
+        th.textContent = col + (sortKey === col ? (sortDir === 1 ? " ▲" : " ▼") : "");
+        th.title = "Ordenar por " + col;
+        th.onclick = () => sortBy(col);
+        tr.appendChild(th);
+      });
+    }
+
+    function renderTable(){
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (page > totalPages) page = totalPages;
+
+      const start = (page - 1) * pageSize;
+      const end = Math.min(start + pageSize, total);
+      const slice = filtered.slice(start, end);
+
+      for (const row of slice){
+        const tr = document.createElement("tr");
+        for (const col of COLUMNS){
+          const td = document.createElement("td");
+          td.textContent = (row[col] ?? "").toString();
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+
+      document.getElementById("pagePill").textContent = "Página " + page + " / " + totalPages;
+      document.getElementById("showingPill").textContent = total ? ("Mostrando " + (start+1) + "–" + end + " de " + total) : "Mostrando —";
+    }
+
+    function applyFilter(){
+      const q = document.getElementById("search").value.trim().toLowerCase();
+      if (!q) filtered = DATA.slice();
+      else filtered = DATA.filter(r => COLUMNS.some(c => String(r[c] ?? "").toLowerCase().includes(q)));
+      page = 1;
+      if (sortKey) sortBy(sortKey, true);
+      renderHeader();
+      renderTable();
+    }
+
+    function sortBy(col, silent=false){
+      if (sortKey === col) sortDir *= -1;
+      else { sortKey = col; sortDir = 1; }
+
+      const dir = sortDir;
+      filtered.sort((a,b)=>{
+        const av = a[col], bv = b[col];
+        const an = toNum(av), bn = toNum(bv);
+        const aNum = !Number.isNaN(an), bNum = !Number.isNaN(bn);
+        if (aNum && bNum) return (an - bn) * dir;
+        const as = String(av ?? "").toLowerCase();
+        const bs = String(bv ?? "").toLowerCase();
+        if (as < bs) return -1 * dir;
+        if (as > bs) return  1 * dir;
+        return 0;
+      });
+
+      if (!silent) renderHeader();
+      renderTable();
+    }
+
+    function nextPage(){ page++; renderTable(); }
+    function prevPage(){ page = Math.max(1, page-1); renderTable(); }
+    function setPageSize(){
+      pageSize = Number(document.getElementById("pageSize").value);
+      page = 1;
+      renderTable();
+    }
+
+    // ===========
+    // OLS (simple y múltiple) - matrices pequeñas
+    // ===========
+    function matMul(A,B){
+      const r = A.length, c = B[0].length, k = B.length;
+      const out = Array.from({length:r}, ()=>Array(c).fill(0));
+      for (let i=0;i<r;i++){
+        for (let j=0;j<c;j++){
+          let s=0;
+          for (let t=0;t<k;t++) s += A[i][t]*B[t][j];
+          out[i][j]=s;
+        }
+      }
+      return out;
+    }
+    function matT(A){
+      const r=A.length, c=A[0].length;
+      const out = Array.from({length:c}, ()=>Array(r).fill(0));
+      for (let i=0;i<r;i++) for (let j=0;j<c;j++) out[j][i]=A[i][j];
+      return out;
+    }
+    function matInv(A){
+      const n = A.length;
+      const M = A.map((row,i)=> row.slice().concat(
+        Array.from({length:n}, (_,j)=> (i===j?1:0))
+      ));
+      for (let i=0;i<n;i++){
+        // pivot
+        let pivot = M[i][i];
+        if (Math.abs(pivot) < 1e-12){
+          let swap = -1;
+          for (let r=i+1;r<n;r++){
+            if (Math.abs(M[r][i]) > 1e-12){ swap=r; break; }
+          }
+          if (swap === -1) throw new Error("Matriz no invertible");
+          const tmp = M[i]; M[i]=M[swap]; M[swap]=tmp;
+          pivot = M[i][i];
+        }
+        // normalize row
+        for (let j=0;j<2*n;j++) M[i][j] /= pivot;
+        // eliminate
+        for (let r=0;r<n;r++){
+          if (r===i) continue;
+          const f = M[r][i];
+          for (let j=0;j<2*n;j++) M[r][j] -= f*M[i][j];
+        }
+      }
+      return M.map(row => row.slice(n));
+    }
+
+    function ols(X, y){
+      // X: n x k, y: n
+      const n = X.length, k = X[0].length;
+      const yCol = y.map(v=>[v]);
+      const Xt = matT(X);
+      const XtX = matMul(Xt, X);
+      const XtX_inv = matInv(XtX);
+      const XtY = matMul(Xt, yCol);
+      const beta = matMul(XtX_inv, XtY).map(r=>r[0]);
+
+      // fitted, residuals, R2
+      const yhat = X.map(row => row.reduce((s,v,j)=>s+v*beta[j],0));
+      const ybar = mean(y);
+      let sse=0, sst=0;
+      for (let i=0;i<n;i++){
+        const e = y[i]-yhat[i];
+        sse += e*e;
+        const d = y[i]-ybar;
+        sst += d*d;
+      }
+      const r2 = 1 - sse/(sst||1);
+
+      // standard errors
+      const df = Math.max(1, n - k);
+      const s2 = sse/df;
+      const varB = XtX_inv.map(row => row.map(v=>v*s2));
+      const se = varB.map((row,i)=>Math.sqrt(Math.max(0,row[i])));
+      const t = beta.map((b,i)=> b/(se[i]||1e-12));
+      const p = t.map(tt => pval2sided_from_t(tt));
+
+      return {beta, yhat, r2, sse, df, se, t, p};
+    }
+
+    // ===========
+    // Gráficas en Canvas
+    // ===========
+    function drawScatterWithLine(canvasId, points, line, xLabel, yLabel){
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const padL=74, padR=18, padT=18, padB=56;
+
+      const xs = points.map(p=>p.x), ys = points.map(p=>p.y);
+      const xMin = Math.min(...xs), xMax = Math.max(...xs);
+      const yMin = Math.min(...ys), yMax = Math.max(...ys);
+
+      const fx = x => padL + ((x-xMin)/(xMax-xMin||1))*(W-padL-padR);
+      const fy = y => (H-padB) - ((y-yMin)/(yMax-yMin||1))*(H-padT-padB);
+
+      // plot area
+      ctx.fillStyle="rgba(255,255,255,0.02)";
+      ctx.fillRect(padL,padT,W-padL-padR,H-padT-padB);
+
+      // axes
+      ctx.strokeStyle="rgba(255,255,255,0.18)";
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(padL,padT);
+      ctx.lineTo(padL,H-padB);
+      ctx.lineTo(W-padR,H-padB);
+      ctx.stroke();
+
+      // grid
+      ctx.strokeStyle="rgba(255,255,255,0.08)";
+      ctx.setLineDash([4,6]);
+      for (let i=1;i<=4;i++){
+        const y = padT + i*(H-padT-padB)/5;
+        ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      }
+      for (let i=1;i<=4;i++){
+        const x = padL + i*(W-padL-padR)/5;
+        ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,H-padB); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      // labels
+      ctx.fillStyle="rgba(183,195,230,0.95)";
+      ctx.font="14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(xLabel, Math.floor((padL + (W-padR))/2) - 30, H - 18);
+      ctx.save();
+      ctx.translate(18, Math.floor((padT + (H-padB))/2) + 30);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      // points
+      ctx.fillStyle="rgba(56,189,248,0.70)";
+      for (const p of points){
+        const x = fx(p.x), y = fy(p.y);
+        ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
+      }
+
+      // line y = a + b x
+      if (line){
+        const x1 = xMin, x2 = xMax;
+        const y1 = line.a + line.b*x1;
+        const y2 = line.a + line.b*x2;
+        ctx.strokeStyle="rgba(124,58,237,0.95)";
+        ctx.lineWidth=2.2;
+        ctx.beginPath();
+        ctx.moveTo(fx(x1), fy(y1));
+        ctx.lineTo(fx(x2), fy(y2));
+        ctx.stroke();
+      }
+    }
+
+    function drawHistogram(canvasId, values, bins=12, xLabel="log(GDP)", yLabel="Frecuencia"){
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const padL=74, padR=18, padT=18, padB=56;
+
+      const vMin = Math.min(...values), vMax = Math.max(...values);
+      const bw = (vMax - vMin) / (bins || 1);
+
+      const counts = Array(bins).fill(0);
+      for (const v of values){
+        let idx = Math.floor((v - vMin) / (bw || 1));
+        if (idx < 0) idx = 0;
+        if (idx >= bins) idx = bins - 1;
+        counts[idx]++;
+      }
+      const cMax = Math.max(...counts);
+
+      const fx = x => padL + ((x - vMin)/(vMax - vMin || 1))*(W-padL-padR);
+      const fy = y => (H-padB) - (y/(cMax||1))*(H-padT-padB);
+
+      // plot area
+      ctx.fillStyle="rgba(255,255,255,0.02)";
+      ctx.fillRect(padL,padT,W-padL-padR,H-padT-padB);
+
+      // axes
+      ctx.strokeStyle="rgba(255,255,255,0.18)";
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(padL,padT);
+      ctx.lineTo(padL,H-padB);
+      ctx.lineTo(W-padR,H-padB);
+      ctx.stroke();
+
+      // bars
+      ctx.fillStyle="rgba(56,189,248,0.55)";
+      for (let i=0;i<bins;i++){
+        const x0 = vMin + i*bw;
+        const x1 = x0 + bw;
+        const y0 = 0;
+        const y1 = counts[i];
+
+        const px0 = fx(x0);
+        const px1 = fx(x1);
+        const py0 = fy(y0);
+        const py1 = fy(y1);
+
+        ctx.fillRect(px0+1, py1, Math.max(1, (px1-px0)-2), py0-py1);
+      }
+
+      // labels
+      ctx.fillStyle="rgba(183,195,230,0.95)";
+      ctx.font="14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(xLabel, Math.floor((padL + (W-padR))/2) - 30, H - 18);
+      ctx.save();
+      ctx.translate(18, Math.floor((padT + (H-padB))/2) + 30);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+    }
+
+    function drawRealVsPred(canvasId, y, yhat, xLabel="Happiness real", yLabel="Happiness estimada"){
+      const pts = y.map((v,i)=>({x:v,y:yhat[i]}));
+      // diagonal line y=x
+      const xs = pts.map(p=>p.x);
+      const xMin = Math.min(...xs), xMax = Math.max(...xs);
+      const line = {a:0, b:1}; // plotted in same coords; handled in draw with a/b
+      // Use scatter drawer with line, but with equal axes meaning.
+      drawScatterWithLine(canvasId, pts, line, xLabel, yLabel);
+    }
+
+    // ===========
+    // Model pipeline: rename -> clean -> regressions -> charts
+    // ===========
+    function normalizeColumns(obj){
+      // rename to match the PDF logic:
+      // Happiness.Score -> Happiness
+      // Economy..GDP.per.Capita. -> GDP
+      // Health..Life.Expectancy. -> Health
+      // Trust..Government.Corruption. -> Trust
+      // Family -> Family
+      const out = {...obj};
+
+      if ("Happiness.Score" in out && !("Happiness" in out)) out["Happiness"] = out["Happiness.Score"];
+      if ("Economy..GDP.per.Capita." in out && !("GDP" in out)) out["GDP"] = out["Economy..GDP.per.Capita."];
+      if ("Health..Life.Expectancy." in out && !("Health" in out)) out["Health"] = out["Health..Life.Expectancy."];
+      if ("Trust..Government.Corruption." in out && !("Trust" in out)) out["Trust"] = out["Trust..Government.Corruption."];
+      // Family stays as Family if exists
+      return out;
+    }
+
+    function runModels(){
+      // Build clean dataset as in PDF: GDP, Health, Family > 0
+      const clean = [];
+      for (const r0 of DATA){
+        const r = normalizeColumns(r0);
+        const Happiness = toNum(r["Happiness"]);
+        const GDP = toNum(r["GDP"]);
+        const Family = toNum(r["Family"]);
+        const Health = toNum(r["Health"]);
+        const Trust = toNum(r["Trust"]);
+
+        if ([Happiness,GDP,Family,Health,Trust].some(v => Number.isNaN(v))) continue;
+        if (!(GDP > 0 && Health > 0 && Family > 0)) continue;
+
+        clean.push({
+          ...r,
+          Happiness, GDP, Family, Health, Trust,
+          log_GDP: Math.log(GDP)
+        });
+      }
+
+      document.getElementById("cleanPill").textContent = "Limpias: " + clean.length;
+      document.getElementById("kpiNVal").textContent = String(clean.length);
+
+      // Simple model: Happiness ~ 1 + GDP
+      const y = clean.map(r=>r.Happiness);
+      const Xs = clean.map(r=>[1, r.GDP]);
+      const resS = ols(Xs, y);
+
+      // Multiple model: Happiness ~ 1 + log_GDP + Family + Health + Trust
+      const Xm = clean.map(r=>[1, r.log_GDP, r.Family, r.Health, r.Trust]);
+      const resM = ols(Xm, y);
+
+      // KPIs
+      const rmseM = rmse(y, resM.yhat);
+      document.getElementById("kpiR2SVal").textContent = "R²: " + fmt(resS.r2, 4);
+      document.getElementById("kpiR2SSub").textContent = "β0: " + fmt(resS.beta[0],4) + " · β1: " + fmt(resS.beta[1],4);
+
+      document.getElementById("kpiR2MVal").textContent = "R²: " + fmt(resM.r2, 4);
+      document.getElementById("kpiR2MSub").textContent =
+        "β: [" + resM.beta.map(b=>fmt(b,4)).join(", ") + "]";
+
+      document.getElementById("kpiRMSEVal").textContent = fmt(rmseM, 4);
+
+      // Coef table for multiple model
+      const labels = ["Intercepto","log(GDP)","Family","Health","Trust"];
+      const body = document.getElementById("coefBody");
+      body.innerHTML = "";
+      for (let i=0;i<labels.length;i++){
+        const tr = document.createElement("tr");
+        const tds = [
+          labels[i],
+          fmt(resM.beta[i],4),
+          fmt(resM.se[i],4),
+          fmt(resM.t[i],4),
+          fmt(resM.p[i],4)
+        ];
+        for (const v of tds){
+          const td = document.createElement("td");
+          td.textContent = v;
+          tr.appendChild(td);
+        }
+        body.appendChild(tr);
+      }
+
+      // Charts
+      // Scatter + regression line for simple model
+      const ptsSimple = clean.map(r=>({x:r.GDP, y:r.Happiness}));
+      const lineSimple = {a: resS.beta[0], b: resS.beta[1]};
+      drawScatterWithLine("c1", ptsSimple, lineSimple, "GDP per capita", "Happiness");
+
+      // Histogram log_GDP
+      const lg = clean.map(r=>r.log_GDP);
+      drawHistogram("c2", lg, 12, "log(GDP)", "Frecuencia");
+
+      // Real vs Pred (multiple)
+      drawRealVsPred("c3", y, resM.yhat, "Felicidad real", "Felicidad estimada");
+    }
+
+    // ===========
+    // Notebook loader
+    // ===========
+    function isRelevantCell(src){
+      const s = src.toLowerCase();
+      const keys = [
+        "rename(columns", "df_clean", "ols", "sm.ols", "sm.add_constant",
+        "happiness", "gdp", "log", "np.log", "summary", "fittedvalues", "scatter", "plt"
+      ];
+      return keys.some(k => s.includes(k));
+    }
+
+    async function loadNotebook(){
+      try{
+        const res = await fetch("./A1_2_Regresion_Lineal%20(1).ipynb", {cache:"no-store"});
+        if (!res.ok) throw new Error("No se pudo cargar el notebook");
+        const nb = await res.json();
+        const cells = Array.isArray(nb.cells) ? nb.cells : [];
+        const codeCells = cells.filter(c => c.cell_type === "code");
+
+        const out = [];
+        for (const c of codeCells){
+          const src = Array.isArray(c.source) ? c.source.join("") : (c.source ?? "");
+          if (src && isRelevantCell(src)) out.push(src.trim());
+        }
+
+        document.getElementById("codeDump").textContent =
+          out.length ? out.join("\n\n# -------------------------\n\n") : "No se detectaron celdas relevantes automáticamente.";
+      } catch(e){
+        document.getElementById("codeDump").textContent =
+          "No se pudo cargar el notebook (revisa el nombre del archivo y GitHub Pages).";
+      }
+    }
+
+    async function copyAllCode(){
+      const text = document.getElementById("codeDump").textContent;
+      try{ await navigator.clipboard.writeText(text); }
+      catch(e){
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+    }
+
+    // ===========
+    // CSV loader
+    // ===========
+    async function loadCSV(){
+      const status = document.getElementById("statusPill");
+      try{
+        const res = await fetch("./A1.2%20Felicidad%20y%20GDP.csv", {cache:"no-store"});
+        if (!res.ok) throw new Error("No se pudo cargar el CSV");
+        const text = await res.text();
+
+        const rows = parseCSV(text);
+        if (!rows.length) throw new Error("CSV vacío");
+
+        COLUMNS = rows[0].map(x => x.trim());
+        const data = [];
+        for (let i=1;i<rows.length;i++){
+          const r = rows[i];
+          if (!r || !r.length) continue;
+          const obj = {};
+          for (let j=0;j<COLUMNS.length;j++){
+            obj[COLUMNS[j]] = (r[j] ?? "").trim();
+          }
+          data.push(obj);
+        }
+
+        DATA = data;
+        filtered = DATA.slice();
+
+        document.getElementById("rowsPill").textContent = "Filas: " + DATA.length;
+        document.getElementById("colsPill").textContent = "Columnas: " + COLUMNS.length;
+        status.textContent = "CSV cargado";
+        status.classList.add("ok");
+
+        renderHeader();
+        renderTable();
+        runModels();
+      } catch(e){
+        status.textContent = "Error al cargar CSV";
+        status.classList.add("bad");
+        document.getElementById("rowsPill").textContent = "Filas: —";
+        document.getElementById("colsPill").textContent = "Columnas: —";
+        document.getElementById("cleanPill").textContent = "Limpias: —";
+      }
+    }
+
+    loadCSV();
+    loadNotebook();
+  </script>
+</body>
+</html>
