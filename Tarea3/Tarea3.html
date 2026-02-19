@@ -1,1 +1,1035 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tarea 3 – A1.3 Regresión lineal múltiple (Calificaciones)</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#121b2e; --text:#e8eefc; --muted:#b7c3e6;
+      --accent:#7c3aed; --border:rgba(255,255,255,.10);
+      --shadow:0 12px 34px rgba(0,0,0,.40);
+      --ok:#22c55e; --bad:#ef4444;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 18% -10%, rgba(124,58,237,.35), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(56,189,248,.15), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(11,18,32,.72);
+      border-bottom: 1px solid var(--border);
+    }
+    nav{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      justify-content: space-between;
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2px}
+    .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);box-shadow:0 0 0 4px rgba(124,58,237,.18)}
+    .nav-links{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    a.btn, button.btn, .chip{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 12px;
+      text-decoration:none;
+      font-size:14px;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+    }
+    a.btn:hover, button.btn:hover, .chip:hover{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(124,58,237,.45);
+      transform: translateY(-1px);
+    }
+    a.btn.primary{
+      background: rgba(124,58,237,.18);
+      border-color: rgba(124,58,237,.55);
+    }
 
+    main{max-width:1180px;margin:0 auto;padding:28px 18px 64px}
+    .hero{
+      padding: 26px 22px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    h1{margin:0 0 6px;font-size:28px}
+    .subtitle{margin:0;color:var(--muted)}
+    .callout{
+      margin-top:12px;
+      padding:12px;
+      border-radius:14px;
+      border: 1px dashed rgba(124,58,237,.55);
+      background: rgba(124,58,237,.10);
+    }
+
+    .grid{margin-top:16px;display:grid;grid-template-columns:1fr;gap:14px}
+    @media (min-width: 980px){
+      .grid{grid-template-columns: 1fr 1fr;}
+      .span-2{grid-column: 1 / -1;}
+    }
+    section.card{
+      border: 1px solid var(--border);
+      background: rgba(18,27,46,.78);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .anchor{scroll-margin-top: 86px;}
+    h2{margin:0 0 10px;font-size:18px}
+    h3{margin:0 0 10px;font-size:16px}
+    p{margin:0 0 10px}
+    .muted{color:var(--muted)}
+    .pill{
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+
+    /* Table */
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 12px}
+    input[type="search"]{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      background: rgba(255,255,255,.04);color: var(--text);outline:none;min-width:260px;
+    }
+    input[type="search"]::placeholder{color: rgba(183,195,230,.7)}
+    .tablewrap{
+      overflow:auto;border:1px solid var(--border);border-radius:14px;background: rgba(11,18,32,.30);
+    }
+    table{border-collapse:collapse;width:100%;min-width:980px}
+    th, td{
+      padding:10px 10px;border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;font-size:13px;white-space:nowrap;
+    }
+    th{
+      position:sticky;top:0;background: rgba(11,18,32,.85);
+      cursor:pointer;user-select:none;
+    }
+    tr:hover td{background: rgba(255,255,255,.03)}
+    .pager{
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-top:12px
+    }
+    select{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 9px 10px;
+      border-radius: 12px;
+      outline:none;
+    }
+
+    /* Code blocks */
+    .codebox{
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(11,18,32,.55);
+    }
+    .codehead{
+      display:flex;justify-content:space-between;align-items:center;padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.08);gap:12px;
+    }
+    .codetitle{font-weight:800;font-size:13px;color:var(--muted)}
+    pre{margin:0;overflow:auto;padding:12px}
+    code{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-size:12.5px}
+
+    /* Charts */
+    .chartgrid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:12px}
+    @media (min-width: 980px){ .chartgrid{grid-template-columns:1fr 1fr;} }
+    canvas{
+      width:100%;
+      height: 360px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(11,18,32,.45);
+    }
+
+    /* KPI */
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (min-width: 980px){ .kpi{grid-template-columns: 1fr 1fr 1fr 1fr;} }
+    .kpi .box{
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(11,18,32,.45);
+    }
+    .kpi .label{color:var(--muted);font-size:13px;margin-bottom:6px}
+    .kpi .value{font-weight:900;font-size:16px}
+    .kpi .sub{color:var(--muted);font-size:12px;margin-top:6px}
+
+    .footer{margin-top:18px;color:var(--muted);font-size:13px;border-top:1px solid var(--border);padding-top:14px}
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav>
+      <div class="brand"><span class="dot" aria-hidden="true"></span><span>Tarea 3 – A1.3</span></div>
+      <div class="nav-links">
+        <a class="btn primary" href="../index.html">← Regresar a index.html</a>
+        <a class="chip" href="#descripcion">Descripción</a>
+        <a class="chip" href="#dataset">CSV</a>
+        <a class="chip" href="#prep">Preparación</a>
+        <a class="chip" href="#modelo">Modelo</a>
+        <a class="chip" href="#codigo">Código</a>
+        <a class="chip" href="#graficas">Gráficas</a>
+        <a class="chip" href="#archivos">Archivos</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero anchor" id="descripcion">
+      <h1>A1.3 – Regresión lineal múltiple para predecir calificación final (G3)</h1>
+      <p class="subtitle">
+        Se construye un modelo de regresión lineal múltiple para predecir <strong>G3</strong> (calificación final) a partir de
+        variables académicas y demográficas. El análisis incluye transformación de variables categóricas, revisión de correlaciones,
+        selección de características y evaluación con <strong>train/test</strong>.
+      </p>
+      <div class="callout">
+        <div><strong>Variable dependiente:</strong> G3</div>
+        <div><strong>Variables seleccionadas:</strong> G2, Reprobadas, Edad, HorasDeEstudio</div>
+        <div class="muted" style="margin-top:6px">
+          (Coherente con el reporte: se excluyen variables redundantes como G1 para evitar multicolinealidad y se conserva G2 por su mayor relación con G3.)
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card span-2 anchor" id="dataset">
+        <h2>1) Dataset (CSV) – Tabla completa</h2>
+        <p class="muted">
+          Tabla con búsqueda, ordenamiento y paginación. Se lee el archivo <code>A1.3 Calificaciones.csv</code>.
+        </p>
+
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="Buscar en todas las columnas…" oninput="applyFilter()" />
+          <span class="pill" id="statusPill">Cargando CSV…</span>
+          <span class="pill" id="rowsPill">Filas: —</span>
+          <span class="pill" id="colsPill">Columnas: —</span>
+        </div>
+
+        <div class="tablewrap">
+          <table id="dataTable">
+            <thead><tr id="theadRow"></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="pager">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+            <button class="btn" onclick="prevPage()">← Anterior</button>
+            <button class="btn" onclick="nextPage()">Siguiente →</button>
+            <span class="pill" id="pagePill">Página —</span>
+            <span class="pill" id="showingPill">Mostrando —</span>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+            <span class="pill">Filas por página</span>
+            <select id="pageSize" onchange="setPageSize()">
+              <option>25</option>
+              <option selected>50</option>
+              <option>100</option>
+              <option>200</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="card anchor" id="prep">
+        <h2>2) Preparación y limpieza</h2>
+        <p>
+          Se transforman variables categóricas binarias a valores numéricos:
+          <strong>Escuela</strong> (GP→0, MS→1), <strong>Sexo</strong> (F→0, M→1) e <strong>Internet</strong> (no→0, yes→1).
+        </p>
+        <div class="callout">
+          <strong>Transformación:</strong>
+          <div class="muted" style="margin-top:6px">
+            Escuela = {GP:0, MS:1} · Sexo = {F:0, M:1} · Internet = {no:0, yes:1}
+          </div>
+        </div>
+
+        <h3 style="margin-top:14px">Resumen del pipeline</h3>
+        <ul style="margin:8px 0 0 18px">
+          <li>Mapeo de variables binarias → numéricas</li>
+          <li>Matriz de correlación → identificación de redundancia (G1 vs G2)</li>
+          <li>Selección de features → G2, Reprobadas, Edad, HorasDeEstudio</li>
+          <li>Split 80/20 → evaluación en train y test</li>
+        </ul>
+      </section>
+
+      <section class="card anchor" id="modelo">
+        <h2>3) Modelo y métricas (calculadas desde el CSV)</h2>
+        <p class="muted">
+          Ajuste por OLS en entrenamiento (80%) y evaluación en prueba (20%).
+        </p>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="label">N total (válidas)</div>
+            <div class="value" id="kN">—</div>
+            <div class="sub">Registros usados</div>
+          </div>
+          <div class="box">
+            <div class="label">R² train</div>
+            <div class="value" id="kR2tr">—</div>
+            <div class="sub">Ajuste en entrenamiento</div>
+          </div>
+          <div class="box">
+            <div class="label">R² test</div>
+            <div class="value" id="kR2te">—</div>
+            <div class="sub">Generalización</div>
+          </div>
+          <div class="box">
+            <div class="label">Δ (train − test)</div>
+            <div class="value" id="kGap">—</div>
+            <div class="sub">Diferencia de desempeño</div>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:12px">
+          <strong>Coeficientes (modelo múltiple):</strong>
+          <div class="muted" id="coefInline" style="margin-top:6px">—</div>
+        </div>
+
+        <div class="tablewrap" style="margin-top:12px; min-width:auto">
+          <table style="min-width: 820px;">
+            <thead>
+              <tr>
+                <th>Variable</th>
+                <th>Coeficiente</th>
+                <th>Error estándar</th>
+                <th>t</th>
+                <th>p (aprox.)</th>
+              </tr>
+            </thead>
+            <tbody id="coefBody">
+              <tr><td colspan="5" class="muted">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card anchor" id="codigo">
+        <h2>4) Código (del notebook)</h2>
+        <p class="muted">Se leen celdas relevantes del archivo <code>A1_3_609026 (1).ipynb</code>.</p>
+
+        <div class="codebox">
+          <div class="codehead">
+            <div class="codetitle">Celdas detectadas</div>
+            <button class="btn" onclick="copyAllCode()">Copiar todo</button>
+          </div>
+          <pre><code id="codeDump">Cargando notebook…</code></pre>
+        </div>
+      </section>
+
+      <section class="card span-2 anchor" id="graficas">
+        <h2>5) Gráficas</h2>
+        <p class="muted">
+          (1) Matriz de correlación (variables numéricas) · (2) G3 real vs G3 estimado (test) · (3) Residuos vs estimado (test)
+        </p>
+
+        <div class="chartgrid">
+          <div>
+            <h3>Matriz de correlación</h3>
+            <canvas id="cCorr" width="1200" height="540"></canvas>
+          </div>
+          <div>
+            <h3>G3 real vs G3 estimado (test)</h3>
+            <canvas id="cFit" width="1200" height="540"></canvas>
+          </div>
+          <div class="span-2">
+            <h3>Residuos vs G3 estimado (test)</h3>
+            <canvas id="cRes" width="1200" height="540"></canvas>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Lectura rápida:</strong> mayor concentración de puntos cerca de la diagonal en “real vs estimado” indica buen ajuste;
+          residuos sin patrón claro sugieren que el modelo captura la relación principal sin sesgo evidente.
+        </div>
+      </section>
+
+      <section class="card span-2 anchor" id="archivos">
+        <h2>6) Archivos del entregable</h2>
+        <ul style="margin:8px 0 0 18px">
+          <li><a class="btn" href="./A1.3%20Calificaciones.csv" target="_blank" rel="noopener">Abrir CSV</a></li>
+          <li><a class="btn" href="./A1_3_609026%20(1).ipynb" target="_blank" rel="noopener">Abrir Notebook (.ipynb)</a></li>
+          <li><a class="btn" href="./A1_3_609026%20(1).pdf" target="_blank" rel="noopener">Abrir PDF</a></li>
+        </ul>
+        <div class="footer">
+          Si algún botón no abre, revisa que GitHub Pages esté activo y que los nombres coincidan (mayúsculas/espacios/paréntesis).
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // ===========
+    // Helpers numéricos
+    // ===========
+    function toNum(v){
+      if (v === null || v === undefined) return NaN;
+      if (typeof v === "number") return v;
+      const s = String(v).trim();
+      if (!s) return NaN;
+      const x = Number(s);
+      return Number.isNaN(x) ? NaN : x;
+    }
+    function fmt(n, d=4){
+      if (n === null || n === undefined || Number.isNaN(n)) return "—";
+      return Number(n).toFixed(d);
+    }
+    function mean(arr){
+      if (!arr.length) return NaN;
+      return arr.reduce((s,x)=>s+x,0)/arr.length;
+    }
+
+    // Normal CDF approx (para p-values aprox con muestra grande)
+    function erf(x){
+      const sign = x < 0 ? -1 : 1;
+      x = Math.abs(x);
+      const a1 =  0.254829592, a2 = -0.284496736, a3 =  1.421413741,
+            a4 = -1.453152027, a5 =  1.061405429, p  =  0.3275911;
+      const t = 1/(1+p*x);
+      const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+      return sign*y;
+    }
+    function normCdf(x){ return 0.5*(1+erf(x/Math.SQRT2)); }
+    function pval2sided_from_t(t){ return 2*(1 - normCdf(Math.abs(t))); }
+
+    // ===========
+    // CSV parser
+    // ===========
+    function parseCSV(text){
+      const rows = [];
+      let row = [], cur = "", inQuotes = false;
+
+      for (let i=0; i<text.length; i++){
+        const c = text[i];
+
+        if (c === '"'){
+          const next = text[i+1];
+          if (inQuotes && next === '"'){ cur += '"'; i++; }
+          else inQuotes = !inQuotes;
+          continue;
+        }
+        if (!inQuotes && c === ','){
+          row.push(cur); cur = ""; continue;
+        }
+        if (!inQuotes && (c === '\n' || c === '\r')){
+          if (c === '\r' && text[i+1] === '\n') i++;
+          row.push(cur); cur = "";
+          if (!(row.length === 1 && row[0] === "")) rows.push(row);
+          row = [];
+          continue;
+        }
+        cur += c;
+      }
+      if (cur.length || row.length){ row.push(cur); rows.push(row); }
+      return rows;
+    }
+
+    // ===========
+    // Tabla: filtro, sort, paginación
+    // ===========
+    let DATA = [];
+    let COLUMNS = [];
+    let filtered = [];
+    let page = 1;
+    let pageSize = 50;
+    let sortKey = null;
+    let sortDir = 1;
+
+    function renderHeader(){
+      const tr = document.getElementById("theadRow");
+      tr.innerHTML = "";
+      COLUMNS.forEach(col => {
+        const th = document.createElement("th");
+        th.textContent = col + (sortKey === col ? (sortDir === 1 ? " ▲" : " ▼") : "");
+        th.title = "Ordenar por " + col;
+        th.onclick = () => sortBy(col);
+        tr.appendChild(th);
+      });
+    }
+
+    function renderTable(){
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (page > totalPages) page = totalPages;
+
+      const start = (page - 1) * pageSize;
+      const end = Math.min(start + pageSize, total);
+      const slice = filtered.slice(start, end);
+
+      for (const row of slice){
+        const tr = document.createElement("tr");
+        for (const col of COLUMNS){
+          const td = document.createElement("td");
+          td.textContent = (row[col] ?? "").toString();
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+
+      document.getElementById("pagePill").textContent = "Página " + page + " / " + totalPages;
+      document.getElementById("showingPill").textContent = total ? ("Mostrando " + (start+1) + "–" + end + " de " + total) : "Mostrando —";
+    }
+
+    function applyFilter(){
+      const q = document.getElementById("search").value.trim().toLowerCase();
+      if (!q) filtered = DATA.slice();
+      else filtered = DATA.filter(r => COLUMNS.some(c => String(r[c] ?? "").toLowerCase().includes(q)));
+      page = 1;
+      if (sortKey) sortBy(sortKey, true);
+      renderHeader();
+      renderTable();
+    }
+
+    function sortBy(col, silent=false){
+      if (sortKey === col) sortDir *= -1;
+      else { sortKey = col; sortDir = 1; }
+
+      const dir = sortDir;
+      filtered.sort((a,b)=>{
+        const av = a[col], bv = b[col];
+        const an = toNum(av), bn = toNum(bv);
+        const aNum = !Number.isNaN(an), bNum = !Number.isNaN(bn);
+        if (aNum && bNum) return (an - bn) * dir;
+        const as = String(av ?? "").toLowerCase();
+        const bs = String(bv ?? "").toLowerCase();
+        if (as < bs) return -1 * dir;
+        if (as > bs) return  1 * dir;
+        return 0;
+      });
+
+      if (!silent) renderHeader();
+      renderTable();
+    }
+
+    function nextPage(){ page++; renderTable(); }
+    function prevPage(){ page = Math.max(1, page-1); renderTable(); }
+    function setPageSize(){
+      pageSize = Number(document.getElementById("pageSize").value);
+      page = 1;
+      renderTable();
+    }
+
+    // ===========
+    // OLS (matrices pequeñas)
+    // ===========
+    function matMul(A,B){
+      const r = A.length, c = B[0].length, k = B.length;
+      const out = Array.from({length:r}, ()=>Array(c).fill(0));
+      for (let i=0;i<r;i++){
+        for (let j=0;j<c;j++){
+          let s=0;
+          for (let t=0;t<k;t++) s += A[i][t]*B[t][j];
+          out[i][j]=s;
+        }
+      }
+      return out;
+    }
+    function matT(A){
+      const r=A.length, c=A[0].length;
+      const out = Array.from({length:c}, ()=>Array(r).fill(0));
+      for (let i=0;i<r;i++) for (let j=0;j<c;j++) out[j][i]=A[i][j];
+      return out;
+    }
+    function matInv(A){
+      const n = A.length;
+      const M = A.map((row,i)=> row.slice().concat(
+        Array.from({length:n}, (_,j)=> (i===j?1:0))
+      ));
+      for (let i=0;i<n;i++){
+        let pivot = M[i][i];
+        if (Math.abs(pivot) < 1e-12){
+          let swap = -1;
+          for (let r=i+1;r<n;r++){
+            if (Math.abs(M[r][i]) > 1e-12){ swap=r; break; }
+          }
+          if (swap === -1) throw new Error("Matriz no invertible");
+          const tmp = M[i]; M[i]=M[swap]; M[swap]=tmp;
+          pivot = M[i][i];
+        }
+        for (let j=0;j<2*n;j++) M[i][j] /= pivot;
+        for (let r=0;r<n;r++){
+          if (r===i) continue;
+          const f = M[r][i];
+          for (let j=0;j<2*n;j++) M[r][j] -= f*M[i][j];
+        }
+      }
+      return M.map(row => row.slice(n));
+    }
+
+    function ols(X, y){
+      const n = X.length, k = X[0].length;
+      const yCol = y.map(v=>[v]);
+      const Xt = matT(X);
+      const XtX = matMul(Xt, X);
+      const XtX_inv = matInv(XtX);
+      const XtY = matMul(Xt, yCol);
+      const beta = matMul(XtX_inv, XtY).map(r=>r[0]);
+
+      const yhat = X.map(row => row.reduce((s,v,j)=>s+v*beta[j],0));
+      const ybar = mean(y);
+      let sse=0, sst=0;
+      for (let i=0;i<n;i++){
+        const e = y[i]-yhat[i];
+        sse += e*e;
+        const d = y[i]-ybar;
+        sst += d*d;
+      }
+      const r2 = 1 - sse/(sst||1);
+
+      const df = Math.max(1, n - k);
+      const s2 = sse/df;
+      const varB = XtX_inv.map(row => row.map(v=>v*s2));
+      const se = varB.map((row,i)=>Math.sqrt(Math.max(0,row[i])));
+      const t = beta.map((b,i)=> b/(se[i]||1e-12));
+      const p = t.map(tt => pval2sided_from_t(tt));
+
+      return {beta, yhat, r2, sse, df, se, t, p};
+    }
+
+    // ===========
+    // Split 80/20 (seed fijo)
+    // ===========
+    function seededRng(seed){
+      let s = seed >>> 0;
+      return () => {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        return s / 4294967296;
+      };
+    }
+    function trainTestSplit(n, testRatio=0.2, seed=42){
+      const rng = seededRng(seed);
+      const idx = Array.from({length:n}, (_,i)=>i);
+      for (let i=n-1;i>0;i--){
+        const j = Math.floor(rng()*(i+1));
+        const tmp = idx[i]; idx[i]=idx[j]; idx[j]=tmp;
+      }
+      const testN = Math.max(1, Math.floor(n*testRatio));
+      const testIdx = new Set(idx.slice(0,testN));
+      const train = [], test = [];
+      for (let i=0;i<n;i++){
+        if (testIdx.has(i)) test.push(i);
+        else train.push(i);
+      }
+      return {train, test};
+    }
+
+    // ===========
+    // Correlación + Heatmap
+    // ===========
+    function corr(x, y){
+      const n = x.length;
+      const mx = mean(x), my = mean(y);
+      let num=0, dx=0, dy=0;
+      for (let i=0;i<n;i++){
+        const a = x[i]-mx, b = y[i]-my;
+        num += a*b; dx += a*a; dy += b*b;
+      }
+      return num / Math.sqrt((dx||1e-12)*(dy||1e-12));
+    }
+
+    function drawHeatmap(canvasId, labels, mat){
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const padL=170, padT=40, padR=22, padB=140;
+      const n = labels.length;
+      const cellW = (W-padL-padR)/n;
+      const cellH = (H-padT-padB)/n;
+
+      // background plot area
+      ctx.fillStyle="rgba(255,255,255,0.02)";
+      ctx.fillRect(padL, padT, W-padL-padR, H-padT-padB);
+
+      // cells
+      for (let i=0;i<n;i++){
+        for (let j=0;j<n;j++){
+          const v = mat[i][j]; // [-1,1]
+          // color ramp: negative -> teal, positive -> yellow-ish
+          const t = (v + 1)/2; // 0..1
+          const r = Math.round(20 + 200*t);
+          const g = Math.round(60 + 170*t);
+          const b = Math.round(120 - 90*t);
+          ctx.fillStyle = `rgba(${r},${g},${b},0.85)`;
+          const x = padL + j*cellW;
+          const y = padT + i*cellH;
+          ctx.fillRect(x, y, cellW, cellH);
+        }
+      }
+
+      // grid lines
+      ctx.strokeStyle="rgba(255,255,255,0.10)";
+      for (let i=0;i<=n;i++){
+        const y = padT + i*cellH;
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
+      }
+      for (let j=0;j<=n;j++){
+        const x = padL + j*cellW;
+        ctx.beginPath(); ctx.move_to ? ctx.move_to(x, padT) : ctx.moveTo(x, padT);
+        ctx.lineTo(x, H-padB); ctx.stroke();
+      }
+
+      // labels
+      ctx.fillStyle="rgba(183,195,230,0.95)";
+      ctx.font="13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+
+      // y labels
+      for (let i=0;i<n;i++){
+        const y = padT + i*cellH + cellH/2 + 5;
+        ctx.fillText(labels[i], 14, y);
+      }
+
+      // x labels (rotated)
+      ctx.save();
+      ctx.translate(padL + cellW/2, H - 18);
+      ctx.rotate(-Math.PI/4);
+      for (let j=0;j<n;j++){
+        const x = j*cellW;
+        ctx.fillText(labels[j], x, 0);
+      }
+      ctx.restore();
+
+      // title
+      ctx.fillStyle="rgba(232,238,252,0.95)";
+      ctx.font="15px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Correlación (Pearson)", padL, 22);
+    }
+
+    // ===========
+    // Scatter plots
+    // ===========
+    function drawScatterWithLine(canvasId, points, line, xLabel, yLabel){
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+
+      const padL=74, padR=18, padT=18, padB=56;
+      const xs = points.map(p=>p.x), ys = points.map(p=>p.y);
+      const xMin = Math.min(...xs), xMax = Math.max(...xs);
+      const yMin = Math.min(...ys), yMax = Math.max(...ys);
+
+      const fx = x => padL + ((x-xMin)/(xMax-xMin||1))*(W-padL-padR);
+      const fy = y => (H-padB) - ((y-yMin)/(yMax-yMin||1))*(H-padT-padB);
+
+      ctx.fillStyle="rgba(255,255,255,0.02)";
+      ctx.fillRect(padL,padT,W-padL-padR,H-padT-padB);
+
+      // axes
+      ctx.strokeStyle="rgba(255,255,255,0.18)";
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(padL,padT);
+      ctx.lineTo(padL,H-padB);
+      ctx.lineTo(W-padR,H-padB);
+      ctx.stroke();
+
+      // grid
+      ctx.strokeStyle="rgba(255,255,255,0.08)";
+      ctx.setLineDash([4,6]);
+      for (let i=1;i<=4;i++){
+        const y = padT + i*(H-padT-padB)/5;
+        ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      }
+      for (let i=1;i<=4;i++){
+        const x = padL + i*(W-padL-padR)/5;
+        ctx.beginPath(); ctx.moveTo(x,padT); ctx.lineTo(x,H-padB); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      // labels
+      ctx.fillStyle="rgba(183,195,230,0.95)";
+      ctx.font="14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(xLabel, Math.floor((padL + (W-padR))/2) - 40, H - 18);
+      ctx.save();
+      ctx.translate(18, Math.floor((padT + (H-padB))/2) + 30);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      // points
+      ctx.fillStyle="rgba(56,189,248,0.70)";
+      for (const p of points){
+        const x = fx(p.x), y = fy(p.y);
+        ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
+      }
+
+      // line y = a + b x
+      if (line){
+        const x1=xMin, x2=xMax;
+        const y1=line.a + line.b*x1;
+        const y2=line.a + line.b*x2;
+        ctx.strokeStyle="rgba(124,58,237,0.95)";
+        ctx.lineWidth=2.2;
+        ctx.beginPath();
+        ctx.moveTo(fx(x1), fy(y1));
+        ctx.lineTo(fx(x2), fy(y2));
+        ctx.stroke();
+      }
+    }
+
+    function drawResiduals(canvasId, yhat, resid){
+      const pts = yhat.map((v,i)=>({x:v, y:resid[i]}));
+      drawScatterWithLine(canvasId, pts, {a:0,b:0}, "G3 estimado", "Residuo (real - estimado)");
+    }
+
+    // ===========
+    // Notebook loader
+    // ===========
+    function isRelevantCell(src){
+      const s = src.toLowerCase();
+      const keys = [
+        "map({\"gp\"", "map({\"f\"", "internet", "corr", "heatmap", "g2", "reprob",
+        "train_test_split", "ols", "linearregression", "r2", "predict", "g3"
+      ];
+      return keys.some(k => s.includes(k));
+    }
+
+    async function loadNotebook(){
+      try{
+        const res = await fetch("./A1_3_609026%20(1).ipynb", {cache:"no-store"});
+        if (!res.ok) throw new Error("No se pudo cargar el notebook");
+        const nb = await res.json();
+        const cells = Array.isArray(nb.cells) ? nb.cells : [];
+        const codeCells = cells.filter(c => c.cell_type === "code");
+
+        const out = [];
+        for (const c of codeCells){
+          const src = Array.isArray(c.source) ? c.source.join("") : (c.source ?? "");
+          if (src && isRelevantCell(src)) out.push(src.trim());
+        }
+
+        document.getElementById("codeDump").textContent =
+          out.length ? out.join("\n\n# -------------------------\n\n") : "No se detectaron celdas relevantes automáticamente.";
+      } catch(e){
+        document.getElementById("codeDump").textContent =
+          "No se pudo cargar el notebook (revisa el nombre del archivo y GitHub Pages).";
+      }
+    }
+
+    async function copyAllCode(){
+      const text = document.getElementById("codeDump").textContent;
+      try{ await navigator.clipboard.writeText(text); }
+      catch(e){
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+    }
+
+    // ===========
+    // Modelo principal
+    // ===========
+    function mapBinary(v, dict){
+      const s = String(v ?? "").trim();
+      return (s in dict) ? dict[s] : NaN;
+    }
+
+    function buildModel(){
+      // Requiere columnas: Escuela, Sexo, Internet, Edad, HorasDeEstudio, Reprobadas, G1, G2, G3, Faltas (no todas necesarias)
+      // Selección final: X = [G2, Reprobadas, Edad, HorasDeEstudio], y = G3
+
+      // Mapeos (como en el PDF)
+      const escuelaMap = {"GP":0, "MS":1};
+      const sexoMap = {"F":0, "M":1};
+      const internetMap = {"no":0, "yes":1};
+
+      const rows = [];
+      for (const r0 of DATA){
+        const r = {...r0};
+
+        // Map (si existen)
+        if ("Escuela" in r) r.Escuela = mapBinary(r.Escuela, escuelaMap);
+        if ("Sexo" in r) r.Sexo = mapBinary(r.Sexo, sexoMap);
+        if ("Internet" in r) r.Internet = mapBinary(r.Internet, internetMap);
+
+        // Num fields
+        const Edad = toNum(r["Edad"]);
+        const Horas = toNum(r["HorasDeEstudio"]);
+        const Reprob = toNum(r["Reprobadas"]);
+        const G2 = toNum(r["G2"]);
+        const G3 = toNum(r["G3"]);
+
+        if ([Edad,Horas,Reprob,G2,G3].some(v=>Number.isNaN(v))) continue;
+
+        rows.push({
+          ...r,
+          Edad, HorasDeEstudio:Horas, Reprobadas:Reprob, G2, G3
+        });
+      }
+
+      document.getElementById("kN").textContent = String(rows.length);
+
+      // Train/test split
+      const split = trainTestSplit(rows.length, 0.2, 42);
+      const train = split.train.map(i=>rows[i]);
+      const test  = split.test.map(i=>rows[i]);
+
+      const Xtr = train.map(r=>[1, r.G2, r.Reprobadas, r.Edad, r.HorasDeEstudio]);
+      const ytr = train.map(r=>r.G3);
+
+      const Xte = test.map(r=>[1, r.G2, r.Reprobadas, r.Edad, r.HorasDeEstudio]);
+      const yte = test.map(r=>r.G3);
+
+      const resTr = ols(Xtr, ytr);
+
+      // Predict test with train beta
+      const beta = resTr.beta;
+      const yhatTe = Xte.map(row => row.reduce((s,v,j)=>s+v*beta[j],0));
+
+      // R2 test
+      const ybarTe = mean(yte);
+      let sse=0, sst=0;
+      for (let i=0;i<yte.length;i++){
+        const e = yte[i] - yhatTe[i];
+        sse += e*e;
+        const d = yte[i] - ybarTe;
+        sst += d*d;
+      }
+      const r2te = 1 - sse/(sst||1);
+
+      document.getElementById("kR2tr").textContent = fmt(resTr.r2, 3);
+      document.getElementById("kR2te").textContent = fmt(r2te, 3);
+      document.getElementById("kGap").textContent = fmt(resTr.r2 - r2te, 3);
+
+      const labels = ["Intercepto","G2","Reprobadas","Edad","HorasDeEstudio"];
+      document.getElementById("coefInline").textContent =
+        labels.map((n,i)=>`${n}=${fmt(beta[i],4)}`).join(" · ");
+
+      // Coef table
+      const body = document.getElementById("coefBody");
+      body.innerHTML = "";
+      for (let i=0;i<labels.length;i++){
+        const tr = document.createElement("tr");
+        const tds = [
+          labels[i],
+          fmt(resTr.beta[i],4),
+          fmt(resTr.se[i],4),
+          fmt(resTr.t[i],4),
+          fmt(resTr.p[i],4)
+        ];
+        for (const v of tds){
+          const td = document.createElement("td");
+          td.textContent = v;
+          tr.appendChild(td);
+        }
+        body.appendChild(tr);
+      }
+
+      // Charts
+      // (a) correlation heatmap for numeric columns available in rows
+      // Choose a stable set (if exist) like in the PDF figure:
+      // Escuela, Sexo, Edad, HorasDeEstudio, Reprobadas, Internet, Faltas, G1, G2, G3
+      const corrVars = ["Escuela","Sexo","Edad","HorasDeEstudio","Reprobadas","Internet","Faltas","G1","G2","G3"]
+        .filter(v => v in (rows[0] || {}));
+
+      // build numeric arrays
+      const cols = {};
+      for (const v of corrVars) cols[v] = [];
+      for (const r of rows){
+        for (const v of corrVars){
+          cols[v].push(toNum(r[v]));
+        }
+      }
+      // keep only fully numeric vars
+      const corrVars2 = corrVars.filter(v => cols[v].every(x => !Number.isNaN(x)));
+      const mat = corrVars2.map(v1 => corrVars2.map(v2 => corr(cols[v1], cols[v2])));
+      drawHeatmap("cCorr", corrVars2, mat);
+
+      // (b) real vs pred on test (with diagonal)
+      const ptsFit = yte.map((v,i)=>({x:v, y:yhatTe[i]}));
+      drawScatterWithLine("cFit", ptsFit, {a:0,b:1}, "G3 real", "G3 estimado");
+
+      // (c) residuals
+      const resid = yte.map((v,i)=> v - yhatTe[i]);
+      drawResiduals("cRes", yhatTe, resid);
+    }
+
+    // ===========
+    // CSV loader
+    // ===========
+    async function loadCSV(){
+      const status = document.getElementById("statusPill");
+      try{
+        const res = await fetch("./A1.3%20Calificaciones.csv", {cache:"no-store"});
+        if (!res.ok) throw new Error("No se pudo cargar el CSV");
+        const text = await res.text();
+
+        const rows = parseCSV(text);
+        if (!rows.length) throw new Error("CSV vacío");
+
+        COLUMNS = rows[0].map(x => x.trim());
+        const data = [];
+        for (let i=1;i<rows.length;i++){
+          const r = rows[i];
+          if (!r || !r.length) continue;
+          const obj = {};
+          for (let j=0;j<COLUMNS.length;j++){
+            obj[COLUMNS[j]] = (r[j] ?? "").trim();
+          }
+          data.push(obj);
+        }
+
+        DATA = data;
+        filtered = DATA.slice();
+
+        document.getElementById("rowsPill").textContent = "Filas: " + DATA.length;
+        document.getElementById("colsPill").textContent = "Columnas: " + COLUMNS.length;
+        status.textContent = "CSV cargado";
+        status.style.borderColor = "rgba(34,197,94,.45)";
+
+        renderHeader();
+        renderTable();
+        buildModel();
+      } catch(e){
+        status.textContent = "Error al cargar CSV";
+        status.style.borderColor = "rgba(239,68,68,.55)";
+        document.getElementById("rowsPill").textContent = "Filas: —";
+        document.getElementById("colsPill").textContent = "Columnas: —";
+      }
+    }
+
+    loadCSV();
+    loadNotebook();
+  </script>
+</body>
+</html>
