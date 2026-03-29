@@ -1,1 +1,1335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tarea 5 — LDA & Árbol de Decisión · Calidad del Aire</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #f5f0e8;
+      --paper:    #faf7f2;
+      --ink:      #1a1208;
+      --muted:    #7a6a52;
+      --border:   #d4c8b4;
+      --green:    #2d6a4f;
+      --orange:   #c45e1a;
+      --red:      #9b2226;
+      --blue:     #1d3557;
+      --green-lt: rgba(45,106,79,.12);
+      --orange-lt:rgba(196,94,26,.1);
+      --red-lt:   rgba(155,34,38,.1);
+      --blue-lt:  rgba(29,53,87,.08);
+      --accent:   #c45e1a;
+    }
 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      overflow-x: hidden;
+    }
+
+    /* subtle grid texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(26,18,8,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26,18,8,.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      position: relative;
+      z-index: 1;
+      background: var(--ink);
+      color: var(--bg);
+      padding: 5rem 10vw 4rem;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: 'A2.2';
+      position: absolute;
+      right: 5vw;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(6rem, 16vw, 14rem);
+      font-weight: 700;
+      color: rgba(245,240,232,.04);
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .tag {
+      display: inline-block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--orange);
+      border: 1px solid var(--orange);
+      padding: .2rem .8rem;
+      border-radius: 2px;
+      margin-bottom: 1.8rem;
+      animation: fadeUp .5s ease both;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 5.5vw, 4.8rem);
+      font-weight: 700;
+      line-height: 1.08;
+      color: var(--paper);
+      max-width: 700px;
+      animation: fadeUp .6s .1s ease both;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--orange);
+    }
+
+    .subtitle {
+      margin-top: 1.2rem;
+      font-size: 1rem;
+      color: rgba(245,240,232,.5);
+      max-width: 560px;
+      animation: fadeUp .6s .2s ease both;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(245,240,232,.12);
+      animation: fadeUp .6s .3s ease both;
+    }
+    .meta-item span:first-child {
+      display: block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: rgba(245,240,232,.35);
+    }
+    .meta-item span:last-child {
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--paper);
+    }
+
+    /* ─── NAV ─── */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--ink);
+      border-bottom: 1px solid rgba(245,240,232,.1);
+      padding: .6rem 10vw;
+      display: flex;
+      gap: 1.5rem;
+      overflow-x: auto;
+    }
+    .top-nav a {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .68rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(245,240,232,.45);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: color .2s;
+    }
+    .top-nav a:hover { color: var(--orange); }
+
+    /* ─── LAYOUT ─── */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 4rem 2rem 6rem;
+    }
+
+    /* ─── SECTIONS ─── */
+    section {
+      margin-bottom: 5rem;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .55s ease, transform .55s ease;
+    }
+    section.visible { opacity: 1; transform: none; }
+
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .68rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .5rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .section-label::before {
+      content: '';
+      width: 28px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+    h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 2rem 0 .6rem;
+    }
+    p { margin-bottom: 1rem; color: #3a2e1e; }
+
+    /* ─── CODE ─── */
+    .code-block {
+      background: var(--ink);
+      border-radius: 6px;
+      padding: 1.4rem 1.6rem;
+      margin: 1.4rem 0;
+      overflow-x: auto;
+      position: relative;
+    }
+    .code-block::before {
+      content: attr(data-lang);
+      position: absolute;
+      top: .6rem;
+      right: 1rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(245,240,232,.25);
+    }
+    .code-block code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .8rem;
+      line-height: 1.9;
+      color: #d4c8a8;
+      white-space: pre;
+      display: block;
+    }
+    .kw  { color: #e07040; }
+    .fn  { color: #7ec8a0; }
+    .str { color: #b8d88c; }
+    .cm  { color: #5a5040; font-style: italic; }
+    .num { color: #f0a860; }
+    .cls { color: #a8c8e8; }
+
+    /* ─── TABLES ─── */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--paper);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    thead tr { background: var(--ink); }
+    thead th {
+      padding: .65rem 1rem;
+      text-align: left;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      font-weight: 400;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+    tbody tr:hover { background: rgba(196,94,26,.04); }
+    tbody tr:last-child { border-bottom: none; }
+    td { padding: .6rem 1rem; color: var(--ink); }
+    td.g { color: var(--green); font-weight: 600; }
+    td.o { color: var(--orange); font-weight: 600; }
+    td.r { color: var(--red); font-weight: 600; }
+    td.b { color: var(--blue); font-weight: 600; }
+    td.win { background: rgba(45,106,79,.08); color: var(--green); font-weight: 700; }
+    td.lose { color: var(--muted); }
+
+    /* ─── METRIC CARDS ─── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: .8rem;
+      margin: 1.5rem 0;
+    }
+    .mc {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.1rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .mc::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .mc.g::after { background: var(--green); }
+    .mc.o::after { background: var(--orange); }
+    .mc.r::after { background: var(--red); }
+    .mc.b::after { background: var(--blue); }
+    .mc .val {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--ink);
+      display: block;
+      line-height: 1;
+    }
+    .mc .lbl {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: .3rem;
+      display: block;
+    }
+    .mc .sub {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: .15rem;
+      display: block;
+    }
+
+    /* ─── CLASS DISTRIBUTION BARS ─── */
+    .dist-row {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      margin-bottom: .6rem;
+    }
+    .dist-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .78rem;
+      width: 70px;
+      flex-shrink: 0;
+      color: var(--muted);
+    }
+    .dist-bar-bg {
+      flex: 1;
+      height: 24px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .dist-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      padding-left: .5rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .72rem;
+      color: #fff;
+      font-weight: 500;
+      transition: width 1.2s cubic-bezier(.22,1,.36,1);
+    }
+    .dist-pct {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .75rem;
+      color: var(--muted);
+      width: 45px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    /* ─── CALLOUT ─── */
+    .callout {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 3px;
+      padding: 1rem 1.2rem;
+      margin: 1.3rem 0;
+      font-size: .93rem;
+    }
+    .callout.g { border-left-color: var(--green); }
+    .callout.r { border-left-color: var(--red); }
+    .callout.b { border-left-color: var(--blue); }
+    .callout strong { color: var(--ink); }
+
+    /* ─── LDA PROJECTION ─── */
+    .chart-paper {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    /* ─── CONFUSION MATRIX ─── */
+    .cm-wrap {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin: 1.5rem 0;
+    }
+    .cm-block { flex: 1; min-width: 260px; }
+    .cm-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .8rem;
+      text-align: center;
+    }
+    .cm-grid {
+      display: grid;
+      grid-template-columns: 60px 1fr 1fr 1fr;
+      grid-template-rows: 28px 1fr 1fr 1fr;
+      gap: 3px;
+    }
+    .cm-axlabel {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .62rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: .06em;
+    }
+    .cm-cell {
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: .6rem .3rem;
+      min-height: 60px;
+    }
+    .cm-cell .n {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .cm-cell .lbl {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .55rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-top: .2rem;
+    }
+    .diag   { background: rgba(45,106,79,.12); }
+    .diag .n { color: var(--green); }
+    .diag .lbl { color: rgba(45,106,79,.6); }
+    .off    { background: rgba(155,34,38,.07); }
+    .off .n { color: var(--red); }
+    .off .lbl { color: rgba(155,34,38,.5); }
+    .off2   { background: rgba(196,94,26,.07); }
+    .off2 .n { color: var(--orange); }
+    .off2 .lbl { color: rgba(196,94,26,.5); }
+
+    /* ─── TREE DIAGRAM ─── */
+    .tree-node {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .68rem;
+    }
+
+    /* ─── FEATURE IMPORTANCE BARS ─── */
+    .fi-row {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      margin-bottom: .5rem;
+    }
+    .fi-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .78rem;
+      color: var(--muted);
+      width: 50px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .fi-bar-bg {
+      flex: 1;
+      height: 20px;
+      background: rgba(196,94,26,.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .fi-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--orange));
+      border-radius: 2px;
+      transition: width 1.2s cubic-bezier(.22,1,.36,1);
+    }
+    .fi-pct {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .72rem;
+      color: var(--ink);
+      width: 45px;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    /* ─── COMPARISON BARS ─── */
+    .comp-row {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      margin-bottom: .6rem;
+    }
+    .comp-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .7rem;
+      color: var(--muted);
+      width: 130px;
+      flex-shrink: 0;
+    }
+    .comp-bars {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .comp-bar {
+      height: 14px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      padding-left: .4rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .62rem;
+      color: rgba(245,240,232,.85);
+      font-weight: 500;
+      transition: width 1.2s cubic-bezier(.22,1,.36,1);
+    }
+    .comp-bar.lda { background: var(--blue); }
+    .comp-bar.dt  { background: var(--green); }
+
+    /* ─── FOOTNOTE / REF ─── */
+    .refs {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.2rem 1.4rem;
+      font-size: .82rem;
+      color: var(--muted);
+    }
+    .refs p { margin-bottom: .4rem; color: var(--muted); }
+
+    /* ─── CONCLUSION LIST ─── */
+    .conclusion-list { list-style: none; }
+    .conclusion-list li {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .conclusion-list li:last-child { border-bottom: none; }
+    .conclusion-list .icon {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      margin-top: .15rem;
+    }
+    .conclusion-list .text { font-size: .93rem; }
+    .conclusion-list strong { color: var(--ink); }
+
+    /* ─── WINNER BADGE ─── */
+    .winner {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      background: var(--green);
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: .2rem .7rem;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-left: .5rem;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--ink);
+      color: rgba(245,240,232,.4);
+      padding: 2rem 10vw;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .7rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 3.5rem 1.5rem 3rem; }
+      main { padding: 2.5rem 1.2rem 4rem; }
+      .top-nav { padding: .6rem 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <span class="tag">Tarea 5 · SC3314 IA · UDEM · 2024</span>
+  <h1>LDA <em>&amp;</em><br/>Árboles de<br/><em>Decisión</em></h1>
+  <p class="subtitle">Clasificación de calidad del aire en tres categorías (Buena, Regular, Mala) usando datos de PM2.5 y variables meteorológicas de Monterrey 2024.</p>
+  <div class="meta-row">
+    <div class="meta-item">
+      <span>Dataset</span>
+      <span>8,756 registros horarios</span>
+    </div>
+    <div class="meta-item">
+      <span>Variable objetivo</span>
+      <span>Calidad del Aire (3 clases)</span>
+    </div>
+    <div class="meta-item">
+      <span>Normas</span>
+      <span>NOM-025 / NOM-172</span>
+    </div>
+    <div class="meta-item">
+      <span>Mejor modelo</span>
+      <span>Árbol de Decisión (0.7826)</span>
+    </div>
+  </div>
+</header>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <a href="#problema">01 Problema</a>
+  <a href="#clases">02 Clases</a>
+  <a href="#lda">03 LDA</a>
+  <a href="#arbol">04 Árbol</a>
+  <a href="#importancia">05 Importancia</a>
+  <a href="#comparacion">06 Comparación</a>
+  <a href="#conclusiones">07 Conclusiones</a>
+</nav>
+
+<main>
+
+  <!-- ── 01 PROBLEMA ── -->
+  <section id="problema">
+    <div class="section-label">01 · Definición del Problema</div>
+    <h2>¿Qué queremos predecir?</h2>
+    <p>Tenemos mediciones horarias de calidad del aire registradas en Monterrey durante todo el 2024. La variable objetivo se construye a partir de la concentración de <strong>PM2.5</strong> (partículas suspendidas menores a 2.5 µm), clasificada en tres niveles de acuerdo con la normativa oficial mexicana.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Clase</th><th>Umbral PM2.5 (µg/m³)</th><th>Significado</th></tr></thead>
+        <tbody>
+          <tr><td class="g">Buena</td><td>≤ 25</td><td>Sin riesgo para la población general</td></tr>
+          <tr><td class="o">Regular</td><td>26 – 45</td><td>Problemático para personas con enfermedades respiratorias</td></tr>
+          <tr><td class="r">Mala</td><td>&gt; 45</td><td>Supera el límite permisible de 24 h — riesgo para todos</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Los <strong>6 predictores</strong> seleccionados son: CO, NO2, O3, TMP, HR y WSP. Se excluyeron las columnas de tiempo cíclico porque esa información ya está implícita en la variación diaria de los contaminantes.</p>
+
+    <div class="code-block" data-lang="Python">
+<code><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> sklearn.discriminant_analysis <span class="kw">import</span> LinearDiscriminantAnalysis
+<span class="kw">from</span> sklearn.tree <span class="kw">import</span> DecisionTreeClassifier
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+
+df = pd.read_csv(<span class="str">'datos_limpios_2024.csv'</span>)
+
+<span class="kw">def</span> <span class="fn">clasificar_pm25</span>(x):
+    <span class="kw">if</span> x <= <span class="num">25</span>:   <span class="kw">return</span> <span class="str">'Buena'</span>
+    <span class="kw">elif</span> x <= <span class="num">45</span>: <span class="kw">return</span> <span class="str">'Regular'</span>
+    <span class="kw">else</span>:          <span class="kw">return</span> <span class="str">'Mala'</span>
+
+df[<span class="str">'calidad'</span>] = df[<span class="str">'PM25'</span>].apply(clasificar_pm25)</code>
+    </div>
+  </section>
+
+  <!-- ── 02 CLASES ── -->
+  <section id="clases">
+    <div class="section-label">02 · Balance de Clases y Partición</div>
+    <h2>Distribución y Split Estratificado</h2>
+
+    <div style="margin:1.5rem 0">
+      <div class="dist-row">
+        <span class="dist-name">Buena</span>
+        <div class="dist-bar-bg">
+          <div class="dist-bar-fill" style="width:73.9%;background:var(--green)">6,471 obs.</div>
+        </div>
+        <span class="dist-pct">73.9%</span>
+      </div>
+      <div class="dist-row">
+        <span class="dist-name">Regular</span>
+        <div class="dist-bar-bg">
+          <div class="dist-bar-fill" style="width:21%;background:var(--orange)">1,843 obs.</div>
+        </div>
+        <span class="dist-pct">21.0%</span>
+      </div>
+      <div class="dist-row">
+        <span class="dist-name">Mala</span>
+        <div class="dist-bar-bg">
+          <div class="dist-bar-fill" style="width:5%;background:var(--red)">442 obs.</div>
+        </div>
+        <span class="dist-pct">5.0%</span>
+      </div>
+    </div>
+
+    <div class="callout r">
+      <strong>Desbalance de clases:</strong> La clase "Buena" representa casi ¾ del dataset. Un modelo trivial que predijera siempre "Buena" alcanzaría ~74% de accuracy sin aprender nada. Por eso usamos <strong>muestreo estratificado</strong> y ponemos énfasis en las métricas por clase.
+    </div>
+
+    <div class="code-block" data-lang="Python">
+<code>FEATURES = [<span class="str">'CO'</span>, <span class="str">'NO2'</span>, <span class="str">'O3'</span>, <span class="str">'TMP'</span>, <span class="str">'HR'</span>, <span class="str">'WSP'</span>]
+X = df[FEATURES].values
+y = df[<span class="str">'calidad'</span>].values
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=<span class="num">0.30</span>, random_state=<span class="num">42</span>, stratify=y
+)
+<span class="cm"># Entrenamiento: 6,129 obs. | Prueba: 2,627 obs.</span>
+
+scaler = <span class="cls">StandardScaler</span>()
+X_train_sc = scaler.fit_transform(X_train)  <span class="cm"># fit solo en train</span>
+X_test_sc  = scaler.transform(X_test)        <span class="cm"># aplicar en test</span></code>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Subconjunto</th><th>N Total</th><th>Buena %</th><th>Regular %</th><th>Mala %</th></tr></thead>
+        <tbody>
+          <tr><td>Entrenamiento (70%)</td><td>6,129</td><td class="g">73.9%</td><td class="o">21.0%</td><td class="r">5.0%</td></tr>
+          <tr><td>Prueba (30%)</td><td>2,627</td><td class="g">73.9%</td><td class="o">21.1%</td><td class="r">5.1%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted)">El parámetro <code style="font-family:'IBM Plex Mono',monospace;color:var(--orange);font-size:.82em">stratify=y</code> preserva exactamente las mismas proporciones de clase en ambos subconjuntos.</p>
+  </section>
+
+  <!-- ── 03 LDA ── -->
+  <section id="lda">
+    <div class="section-label">03 · Modelo 1 — LDA</div>
+    <h2>Análisis Discriminante Lineal</h2>
+
+    <p>LDA busca las combinaciones lineales de variables que <strong>maximizan la separación entre clases</strong> mientras minimizan la dispersión dentro de cada clase. Requiere que los datos sigan una distribución normal por clase con matrices de covarianza iguales.</p>
+
+    <div class="callout b">
+      <strong>Supuestos de LDA:</strong> (1) Normalidad multivariada por clase, (2) homocedasticidad (misma matriz de covarianza). En datos de contaminantes estos supuestos son aproximados: los picos de PM2.5 generan distribuciones con colas largas.
+    </div>
+
+    <div class="code-block" data-lang="Python">
+<code>lda = <span class="cls">LinearDiscriminantAnalysis</span>()
+lda.fit(X_train_sc, y_train)
+y_pred_lda = lda.predict(X_test_sc)
+X_lda_test = lda.transform(X_test_sc)
+
+<span class="fn">print</span>(<span class="str">'Varianza explicada por función discriminante:'</span>)
+<span class="kw">for</span> i, vr <span class="kw">in</span> enumerate(lda.explained_variance_ratio_):
+    <span class="fn">print</span>(f<span class="str">' LD{i+1}: {vr*100:.1f} %'</span>)</code>
+    </div>
+
+    <h3>Varianza explicada por las funciones discriminantes</h3>
+    <div class="metrics-grid">
+      <div class="mc b">
+        <span class="val">99.4%</span>
+        <span class="lbl">LD1</span>
+        <span class="sub">Función principal</span>
+      </div>
+      <div class="mc">
+        <span class="val">0.6%</span>
+        <span class="lbl">LD2</span>
+        <span class="sub">Información residual</span>
+      </div>
+    </div>
+
+    <div class="callout b">
+      <strong>LD1 captura casi todo.</strong> Con 3 clases el LDA genera máximo 2 funciones discriminantes. El hecho de que LD1 concentre el 99.4% de la varianza significa que el modelo ya tiene casi toda la información de separación en una sola dimensión.
+    </div>
+
+    <h3>Proyección LDA — lo que revelan las funciones</h3>
+    <div class="chart-paper">
+      <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+        <!-- Panel izquierdo: scatter -->
+        <text x="170" y="18" font-size="9" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace" letter-spacing="1">PROYECCIÓN LD1 vs LD2</text>
+        <!-- axes -->
+        <line x1="50" y1="220" x2="300" y2="220" stroke="#d4c8b4" stroke-width="1"/>
+        <line x1="50" y1="30" x2="50" y2="220" stroke="#d4c8b4" stroke-width="1"/>
+        <text x="175" y="238" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace">LD1 (99.4% varianza)</text>
+        <text x="20" y="130" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace" transform="rotate(-90,20,130)">LD2 (0.6%)</text>
+
+        <!-- simulated scatter: Buena (left cluster) -->
+        <g opacity=".55">
+          <circle cx="80" cy="120" r="3" fill="#2d6a4f"/>
+          <circle cx="90" cy="110" r="3" fill="#2d6a4f"/>
+          <circle cx="75" cy="130" r="3" fill="#2d6a4f"/>
+          <circle cx="100" cy="100" r="3" fill="#2d6a4f"/>
+          <circle cx="85" cy="145" r="3" fill="#2d6a4f"/>
+          <circle cx="110" cy="115" r="3" fill="#2d6a4f"/>
+          <circle cx="70" cy="105" r="3" fill="#2d6a4f"/>
+          <circle cx="95" cy="135" r="3" fill="#2d6a4f"/>
+          <circle cx="115" cy="95"  r="3" fill="#2d6a4f"/>
+          <circle cx="68" cy="150" r="3" fill="#2d6a4f"/>
+          <circle cx="105" cy="125" r="3" fill="#2d6a4f"/>
+          <circle cx="78" cy="88"  r="3" fill="#2d6a4f"/>
+          <circle cx="88" cy="160" r="3" fill="#2d6a4f"/>
+          <circle cx="120" cy="140" r="3" fill="#2d6a4f"/>
+          <circle cx="60" cy="115" r="3" fill="#2d6a4f"/>
+        </g>
+        <!-- Regular (middle) -->
+        <g opacity=".6">
+          <circle cx="140" cy="115" r="3" fill="#c45e1a"/>
+          <circle cx="150" cy="100" r="3" fill="#c45e1a"/>
+          <circle cx="130" cy="130" r="3" fill="#c45e1a"/>
+          <circle cx="155" cy="125" r="3" fill="#c45e1a"/>
+          <circle cx="145" cy="90"  r="3" fill="#c45e1a"/>
+          <circle cx="125" cy="110" r="3" fill="#c45e1a"/>
+          <circle cx="160" cy="140" r="3" fill="#c45e1a"/>
+          <circle cx="135" cy="95"  r="3" fill="#c45e1a"/>
+          <circle cx="165" cy="110" r="3" fill="#c45e1a"/>
+          <circle cx="148" cy="148" r="3" fill="#c45e1a"/>
+        </g>
+        <!-- Mala (right) -->
+        <g opacity=".7">
+          <circle cx="210" cy="115" r="3" fill="#9b2226"/>
+          <circle cx="220" cy="100" r="3" fill="#9b2226"/>
+          <circle cx="230" cy="130" r="3" fill="#9b2226"/>
+          <circle cx="215" cy="90"  r="3" fill="#9b2226"/>
+          <circle cx="240" cy="115" r="3" fill="#9b2226"/>
+          <circle cx="225" cy="140" r="3" fill="#9b2226"/>
+          <circle cx="200" cy="105" r="3" fill="#9b2226"/>
+        </g>
+
+        <!-- overlap region annotation -->
+        <rect x="120" y="75" width="50" height="110" rx="4" fill="none" stroke="#c45e1a" stroke-dasharray="3,3" stroke-width="1" opacity=".4"/>
+        <text x="145" y="72" font-size="7" fill="#c45e1a" text-anchor="middle" font-family="IBM Plex Mono, monospace">traslape</text>
+
+        <!-- legend -->
+        <circle cx="57" cy="35" r="4" fill="#2d6a4f" opacity=".7"/>
+        <text x="65" y="39" font-size="8" fill="#2d6a4f" font-family="IBM Plex Mono, monospace">Buena</text>
+        <circle cx="57" cy="50" r="4" fill="#c45e1a" opacity=".7"/>
+        <text x="65" y="54" font-size="8" fill="#c45e1a" font-family="IBM Plex Mono, monospace">Regular</text>
+        <circle cx="57" cy="65" r="4" fill="#9b2226" opacity=".7"/>
+        <text x="65" y="69" font-size="8" fill="#9b2226" font-family="IBM Plex Mono, monospace">Mala</text>
+
+        <!-- Panel derecho: KDE -->
+        <text x="530" y="18" font-size="9" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace" letter-spacing="1">DENSIDAD EN LD1</text>
+        <line x1="370" y1="220" x2="680" y2="220" stroke="#d4c8b4" stroke-width="1"/>
+        <line x1="370" y1="30" x2="370" y2="220" stroke="#d4c8b4" stroke-width="1"/>
+        <text x="525" y="238" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace">LD1</text>
+        <text x="345" y="130" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace" transform="rotate(-90,345,130)">Densidad</text>
+
+        <!-- Buena KDE curve -->
+        <path d="M370,218 C390,215 410,180 430,100 C440,65 450,45 460,42 C470,45 480,65 490,100 C510,180 530,210 560,218 L680,218"
+          fill="rgba(45,106,79,.15)" stroke="#2d6a4f" stroke-width="2"/>
+
+        <!-- Regular KDE curve (shifted right, overlapping) -->
+        <path d="M400,218 C420,215 440,195 460,140 C475,100 490,80 510,78 C530,80 545,100 555,140 C570,185 590,210 620,218 L680,218"
+          fill="rgba(196,94,26,.15)" stroke="#c45e1a" stroke-width="2"/>
+
+        <!-- Mala KDE curve (far right) -->
+        <path d="M490,218 C510,215 530,200 555,160 C570,135 590,120 605,118 C620,120 635,138 645,165 C658,195 668,212 680,218"
+          fill="rgba(155,34,38,.15)" stroke="#9b2226" stroke-width="2"/>
+
+        <!-- overlap annotation -->
+        <line x1="450" y1="35" x2="450" y2="215" stroke="#c45e1a" stroke-dasharray="3,3" stroke-width="1" opacity=".4"/>
+        <text x="455" y="50" font-size="7" fill="#c45e1a" font-family="IBM Plex Mono, monospace">frontera</text>
+        <text x="455" y="59" font-size="7" fill="#c45e1a" font-family="IBM Plex Mono, monospace">difusa</text>
+      </svg>
+    </div>
+
+    <p>Las distribuciones de <strong style="color:var(--green)">Buena</strong> y <strong style="color:var(--orange)">Regular</strong> se traslapan considerablemente en LD1. La clase <strong style="color:var(--red)">Mala</strong> tiende a valores más altos, pero tampoco queda completamente aislada. Esto refleja un problema físico real: alrededor de 20–30 µg/m³ los contaminantes no cambian bruscamente de un lado al otro del umbral, no hay una frontera lineal nítida.</p>
+
+    <h3>Métricas LDA en conjunto de prueba</h3>
+    <div class="metrics-grid">
+      <div class="mc b"><span class="val">0.7697</span><span class="lbl">Accuracy</span></div>
+      <div class="mc"><span class="val">0.5835</span><span class="lbl">Precisión Macro</span></div>
+      <div class="mc"><span class="val">0.4935</span><span class="lbl">Recall Macro</span></div>
+      <div class="mc"><span class="val">0.5143</span><span class="lbl">F1 Macro</span></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Clase</th><th>Precisión</th><th>Recall</th><th>F1-Score</th><th>Support</th></tr></thead>
+        <tbody>
+          <tr><td class="g">Buena</td><td>0.811</td><td class="g">0.956</td><td class="g">0.877</td><td>1,941</td></tr>
+          <tr><td class="o">Regular</td><td>0.520</td><td class="r">0.231</td><td class="r">0.320</td><td>553</td></tr>
+          <tr><td class="r">Mala</td><td>0.419</td><td class="r">0.293</td><td class="r">0.345</td><td>133</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── 04 ÁRBOL ── -->
+  <section id="arbol">
+    <div class="section-label">04 · Modelo 2 — Árbol de Decisión</div>
+    <h2>Árbol de Decisión con Poda CCP</h2>
+
+    <p>Un árbol de decisión clasifica haciendo preguntas binarias encadenadas. No asume normalidad ni homocedasticidad, y puede capturar relaciones <strong>no lineales</strong>. La desventaja: sin restricciones crece hasta memorizar el ruido del entrenamiento (<em>sobreajuste</em>).</p>
+
+    <div class="callout">
+      <strong>Criterio Gini:</strong> Para elegir cada división, el árbol calcula qué corte reduce más la impureza de los nodos. Gini = 0 significa nodo puro (una sola clase); Gini máximo cuando las clases están mezcladas en partes iguales.
+    </div>
+
+    <h3>Poda por Complejidad de Costo Mínimo (CCP)</h3>
+    <div class="code-block" data-lang="Python">
+<code><span class="cm"># 1. Calcular todos los alphas posibles</span>
+dt_full = <span class="cls">DecisionTreeClassifier</span>(random_state=<span class="num">42</span>)
+path = dt_full.cost_complexity_pruning_path(X_train, y_train)
+ccp_alphas = path.ccp_alphas[::<span class="num">8</span>]
+
+<span class="cm"># 2. Evaluar cada alpha en prueba</span>
+train_scores, test_scores = [], []
+<span class="kw">for</span> alpha <span class="kw">in</span> ccp_alphas:
+    dt = <span class="cls">DecisionTreeClassifier</span>(random_state=<span class="num">42</span>, ccp_alpha=alpha)
+    dt.fit(X_train, y_train)
+    train_scores.append(dt.score(X_train, y_train))
+    test_scores.append(dt.score(X_test, y_test))
+
+<span class="cm"># 3. Elegir el alpha con mayor exactitud en prueba</span>
+best_alpha = float(ccp_alphas[np.argmax(test_scores)])
+<span class="cm"># Alpha óptimo: 0.000617 → Accuracy en prueba: 0.7826</span></code>
+    </div>
+
+    <!-- Pruning curve SVG -->
+    <div class="chart-paper">
+      <svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" style="width:100%">
+        <text x="320" y="18" font-size="9" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace" letter-spacing="1">CURVA DE PODA: EXACTITUD vs ALPHA</text>
+        <line x1="60" y1="30" x2="60" y2="210" stroke="#d4c8b4" stroke-width="1.5"/>
+        <line x1="60" y1="210" x2="610" y2="210" stroke="#d4c8b4" stroke-width="1.5"/>
+        <!-- grid -->
+        <line x1="60" y1="60" x2="610" y2="60" stroke="#e8e0d4" stroke-width="1"/>
+        <line x1="60" y1="105" x2="610" y2="105" stroke="#e8e0d4" stroke-width="1"/>
+        <line x1="60" y1="150" x2="610" y2="150" stroke="#e8e0d4" stroke-width="1"/>
+        <!-- Y labels -->
+        <text x="50" y="34" font-size="8" fill="#7a6a52" text-anchor="end" font-family="IBM Plex Mono, monospace">1.00</text>
+        <text x="50" y="64" font-size="8" fill="#7a6a52" text-anchor="end" font-family="IBM Plex Mono, monospace">0.95</text>
+        <text x="50" y="109" font-size="8" fill="#7a6a52" text-anchor="end" font-family="IBM Plex Mono, monospace">0.90</text>
+        <text x="50" y="154" font-size="8" fill="#7a6a52" text-anchor="end" font-family="IBM Plex Mono, monospace">0.85</text>
+        <text x="50" y="214" font-size="8" fill="#7a6a52" text-anchor="end" font-family="IBM Plex Mono, monospace">0.80</text>
+        <!-- X labels -->
+        <text x="60" y="226" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace">0.0000</text>
+        <text x="200" y="226" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace">0.0010</text>
+        <text x="340" y="226" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace">0.0020</text>
+        <text x="480" y="226" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace">0.0030</text>
+        <text x="610" y="226" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace">0.0035</text>
+        <!-- Train curve (high start, drops) -->
+        <polyline points="60,32  80,35  100,42  130,55  160,70  190,90  220,110  250,130  300,150  360,160  420,165  480,168  540,170  610,172"
+          fill="none" stroke="#1d3557" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Test curve (low start, peaks, drops) -->
+        <polyline points="60,202  80,196  100,188  130,176  160,164  190,154  220,147  250,146  270,144  290,146  330,152  380,157  440,162  500,165  560,170  610,174"
+          fill="none" stroke="#2d6a4f" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Best alpha line -->
+        <line x1="248" y1="30" x2="248" y2="210" stroke="#9b2226" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="254" y="45" font-size="8" fill="#9b2226" font-family="IBM Plex Mono, monospace">α óptimo</text>
+        <text x="254" y="56" font-size="8" fill="#9b2226" font-family="IBM Plex Mono, monospace">0.000617</text>
+        <!-- Legend -->
+        <line x1="390" y1="40" x2="415" y2="40" stroke="#1d3557" stroke-width="2"/>
+        <text x="420" y="44" font-size="9" fill="#1d3557" font-family="IBM Plex Mono, monospace">Entrenamiento</text>
+        <line x1="390" y1="56" x2="415" y2="56" stroke="#2d6a4f" stroke-width="2"/>
+        <text x="420" y="60" font-size="9" fill="#2d6a4f" font-family="IBM Plex Mono, monospace">Prueba</text>
+        <text x="335" y="214" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace">Alpha (ccp_alpha)</text>
+      </svg>
+    </div>
+
+    <p>Con alpha muy pequeño el árbol sobreajusta (entrena ~100%, prueba ~75%). Al aumentar alpha la exactitud en prueba sube hasta <strong>0.7826</strong> en el punto óptimo, luego baja cuando el árbol se simplifica demasiado.</p>
+
+    <div class="code-block" data-lang="Python">
+<code>dt_pruned = <span class="cls">DecisionTreeClassifier</span>(random_state=<span class="num">42</span>, ccp_alpha=<span class="num">0.000617</span>)
+dt_pruned.fit(X_train, y_train)
+y_pred_dt = dt_pruned.predict(X_test)
+
+<span class="fn">print</span>(f<span class="str">'Profundidad del árbol: {dt_pruned.get_depth()}'</span>)   <span class="cm"># 10</span>
+<span class="fn">print</span>(f<span class="str">'Número de hojas    : {dt_pruned.get_n_leaves()}'</span>) <span class="cm"># 68</span></code>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="mc g"><span class="val">10</span><span class="lbl">Profundidad</span><span class="sub">Niveles del árbol</span></div>
+      <div class="mc"><span class="val">68</span><span class="lbl">Hojas</span><span class="sub">Regiones de decisión</span></div>
+      <div class="mc o"><span class="val">0.000617</span><span class="lbl">Alpha óptimo</span><span class="sub">Parámetro de poda</span></div>
+    </div>
+
+    <!-- Simplified decision tree viz -->
+    <h3>Árbol Podado — Primeros 3 niveles</h3>
+    <div class="chart-paper" style="overflow-x:auto">
+      <svg viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg" style="min-width:600px;width:100%">
+        <!-- Nivel 0 -->
+        <rect x="310" y="10" width="180" height="52" rx="6" fill="#1d3557"/>
+        <text x="400" y="30" font-size="9" fill="#a8c8e8" text-anchor="middle" font-family="IBM Plex Mono, monospace">CO ≤ 0.765</text>
+        <text x="400" y="43" font-size="8" fill="rgba(168,200,232,.6)" text-anchor="middle" font-family="IBM Plex Mono, monospace">gini=0.407 | n=6129</text>
+        <text x="400" y="56" font-size="8" fill="#7ec8a0" text-anchor="middle" font-family="IBM Plex Mono, monospace">class: Buena</text>
+
+        <!-- Lines to level 1 -->
+        <line x1="350" y1="62" x2="200" y2="110" stroke="#d4c8b4" stroke-width="1.5"/>
+        <line x1="450" y1="62" x2="600" y2="110" stroke="#d4c8b4" stroke-width="1.5"/>
+        <text x="265" y="90" font-size="8" fill="#2d6a4f" font-family="IBM Plex Mono, monospace">True</text>
+        <text x="515" y="90" font-size="8" fill="#9b2226" font-family="IBM Plex Mono, monospace">False</text>
+
+        <!-- Nivel 1 izq -->
+        <rect x="100" y="110" width="200" height="52" rx="6" fill="#2d6a4f"/>
+        <text x="200" y="130" font-size="9" fill="#a8f0c0" text-anchor="middle" font-family="IBM Plex Mono, monospace">O3 ≤ 0.044</text>
+        <text x="200" y="143" font-size="8" fill="rgba(168,240,192,.6)" text-anchor="middle" font-family="IBM Plex Mono, monospace">gini=0.308 | n=4076</text>
+        <text x="200" y="156" font-size="8" fill="#a8f0c0" text-anchor="middle" font-family="IBM Plex Mono, monospace">class: Buena</text>
+
+        <!-- Nivel 1 der -->
+        <rect x="500" y="110" width="200" height="52" rx="6" fill="#7a4520"/>
+        <text x="600" y="130" font-size="9" fill="#f0c080" text-anchor="middle" font-family="IBM Plex Mono, monospace">TMP ≤ 25.55</text>
+        <text x="600" y="143" font-size="8" fill="rgba(240,192,128,.6)" text-anchor="middle" font-family="IBM Plex Mono, monospace">gini=0.558 | n=2053</text>
+        <text x="600" y="156" font-size="8" fill="#f0c080" text-anchor="middle" font-family="IBM Plex Mono, monospace">class: Buena</text>
+
+        <!-- Lines to level 2 -->
+        <line x1="150" y1="162" x2="80" y2="215" stroke="#d4c8b4" stroke-width="1.2"/>
+        <line x1="250" y1="162" x2="300" y2="215" stroke="#d4c8b4" stroke-width="1.2"/>
+        <line x1="550" y1="162" x2="460" y2="215" stroke="#d4c8b4" stroke-width="1.2"/>
+        <line x1="650" y1="162" x2="710" y2="215" stroke="#d4c8b4" stroke-width="1.2"/>
+
+        <!-- Nivel 2 — 4 nodos -->
+        <rect x="20" y="215" width="130" height="50" rx="5" fill="rgba(45,106,79,.85)"/>
+        <text x="85" y="233" font-size="8" fill="#e8f8e8" text-anchor="middle" font-family="IBM Plex Mono, monospace">CO ≤ 0.515</text>
+        <text x="85" y="246" font-size="8" fill="rgba(232,248,232,.6)" text-anchor="middle" font-family="IBM Plex Mono, monospace">n=372 | Buena</text>
+        <text x="85" y="258" font-size="7" fill="#a8f0c0" text-anchor="middle" font-family="IBM Plex Mono, monospace">class: Buena</text>
+
+        <rect x="230" y="215" width="130" height="50" rx="5" fill="rgba(45,106,79,.7)"/>
+        <text x="295" y="233" font-size="8" fill="#e8f8e8" text-anchor="middle" font-family="IBM Plex Mono, monospace">LO ≤ 0.515</text>
+        <text x="295" y="246" font-size="8" fill="rgba(232,248,232,.6)" text-anchor="middle" font-family="IBM Plex Mono, monospace">n=3704 | Buena</text>
+        <text x="295" y="258" font-size="7" fill="#a8f0c0" text-anchor="middle" font-family="IBM Plex Mono, monospace">class: Buena</text>
+
+        <rect x="390" y="215" width="140" height="50" rx="5" fill="rgba(122,69,32,.8)"/>
+        <text x="460" y="233" font-size="8" fill="#f8e8c8" text-anchor="middle" font-family="IBM Plex Mono, monospace">NO2 ≤ 0.029</text>
+        <text x="460" y="246" font-size="8" fill="rgba(248,232,200,.6)" text-anchor="middle" font-family="IBM Plex Mono, monospace">n=1427 | Buena</text>
+        <text x="460" y="258" font-size="7" fill="#f0c080" text-anchor="middle" font-family="IBM Plex Mono, monospace">class: Buena</text>
+
+        <rect x="640" y="215" width="140" height="50" rx="5" fill="rgba(155,34,38,.75)"/>
+        <text x="710" y="233" font-size="8" fill="#f8c8c8" text-anchor="middle" font-family="IBM Plex Mono, monospace">NO2 ≤ 0.018</text>
+        <text x="710" y="246" font-size="8" fill="rgba(248,200,200,.6)" text-anchor="middle" font-family="IBM Plex Mono, monospace">n=626 | Buena</text>
+        <text x="710" y="258" font-size="7" fill="#f0a0a0" text-anchor="middle" font-family="IBM Plex Mono, monospace">class: Regular</text>
+
+        <!-- depth indicator -->
+        <text x="10" y="120" font-size="7" fill="#7a6a52" font-family="IBM Plex Mono, monospace">Nivel 1</text>
+        <text x="10" y="230" font-size="7" fill="#7a6a52" font-family="IBM Plex Mono, monospace">Nivel 2</text>
+        <text x="400" y="330" font-size="8" fill="#7a6a52" text-anchor="middle" font-family="IBM Plex Mono, monospace">(árbol completo tiene profundidad 10 y 68 hojas — se muestran primeros 3 niveles)</text>
+      </svg>
+    </div>
+    <p>La <strong>primera pregunta del árbol es siempre sobre CO</strong>: si CO ≤ 0.765 el aire probablemente es Buena; si no, se ramifica hacia condiciones más complejas que involucran temperatura, NO2 y O3.</p>
+  </section>
+
+  <!-- ── 05 IMPORTANCIA ── -->
+  <section id="importancia">
+    <div class="section-label">05 · Importancia de Variables</div>
+    <h2>¿Qué variables pesan más?</h2>
+
+    <div style="margin:1.5rem 0">
+      <div class="fi-row">
+        <span class="fi-name">CO</span>
+        <div class="fi-bar-bg"><div class="fi-bar-fill" style="width:33.1%"></div></div>
+        <span class="fi-pct">33.1%</span>
+      </div>
+      <div class="fi-row">
+        <span class="fi-name">TMP</span>
+        <div class="fi-bar-bg"><div class="fi-bar-fill" style="width:18.9%"></div></div>
+        <span class="fi-pct">18.9%</span>
+      </div>
+      <div class="fi-row">
+        <span class="fi-name">NO2</span>
+        <div class="fi-bar-bg"><div class="fi-bar-fill" style="width:17.8%"></div></div>
+        <span class="fi-pct">17.8%</span>
+      </div>
+      <div class="fi-row">
+        <span class="fi-name">O3</span>
+        <div class="fi-bar-bg"><div class="fi-bar-fill" style="width:17.4%"></div></div>
+        <span class="fi-pct">17.4%</span>
+      </div>
+      <div class="fi-row">
+        <span class="fi-name">HR</span>
+        <div class="fi-bar-bg"><div class="fi-bar-fill" style="width:7.5%"></div></div>
+        <span class="fi-pct">7.5%</span>
+      </div>
+      <div class="fi-row">
+        <span class="fi-name">WSP</span>
+        <div class="fi-bar-bg"><div class="fi-bar-fill" style="width:5.3%"></div></div>
+        <span class="fi-pct">5.3%</span>
+      </div>
+    </div>
+
+    <div class="callout b">
+      <strong>CO lidera con 33.1%</strong> — es subproducto directo de la combustión vehicular e industrial, y en Monterrey se correlaciona fuertemente con PM2.5. La temperatura (18.9%) importa porque las inversiones térmicas atrapan contaminantes y promueven reacciones que forman partículas secundarias.
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>Importancia</th><th>Interpretación física</th></tr></thead>
+        <tbody>
+          <tr><td class="b">CO</td><td class="b">33.1%</td><td>Subproducto de combustión; predictor principal de PM2.5</td></tr>
+          <tr><td>TMP</td><td>18.9%</td><td>Inversiones térmicas atrapan contaminantes; activa reacciones secundarias</td></tr>
+          <tr><td>NO2</td><td>17.8%</td><td>Indica actividad vehicular; precursor de ozono</td></tr>
+          <tr><td>O3</td><td>17.4%</td><td>Contaminante secundario; correlaciona con condiciones fotoquímicas</td></tr>
+          <tr><td>HR</td><td>7.5%</td><td>Humedad alta favorece formación de partículas secundarias</td></tr>
+          <tr><td>WSP</td><td>5.3%</td><td>Viento dispersa contaminantes; factor protector</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── 06 COMPARACIÓN ── -->
+  <section id="comparacion">
+    <div class="section-label">06 · Evaluación y Comparación</div>
+    <h2>LDA <em>vs.</em> Árbol de Decisión</h2>
+
+    <!-- Confusion matrices -->
+    <h3>Matrices de Confusión</h3>
+    <div class="cm-wrap">
+      <!-- LDA -->
+      <div class="cm-block">
+        <div class="cm-title">LDA — Datos de Prueba</div>
+        <div class="cm-grid">
+          <div class="cm-axlabel"></div>
+          <div class="cm-axlabel" style="font-size:.6rem">Pred: Buena</div>
+          <div class="cm-axlabel" style="font-size:.6rem">Pred: Reg.</div>
+          <div class="cm-axlabel" style="font-size:.6rem">Pred: Mala</div>
+
+          <div class="cm-axlabel" style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:.58rem">Real: Buena</div>
+          <div class="cm-cell diag"><span class="n">1855</span><span class="lbl">TN</span></div>
+          <div class="cm-cell off2"><span class="n">77</span><span class="lbl">err</span></div>
+          <div class="cm-cell off2"><span class="n">9</span><span class="lbl">err</span></div>
+
+          <div class="cm-axlabel" style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:.58rem">Real: Reg.</div>
+          <div class="cm-cell off"><span class="n">380</span><span class="lbl">err</span></div>
+          <div class="cm-cell diag"><span class="n">128</span><span class="lbl">TP</span></div>
+          <div class="cm-cell off2"><span class="n">45</span><span class="lbl">err</span></div>
+
+          <div class="cm-axlabel" style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:.58rem">Real: Mala</div>
+          <div class="cm-cell off"><span class="n">53</span><span class="lbl">err</span></div>
+          <div class="cm-cell off"><span class="n">41</span><span class="lbl">err</span></div>
+          <div class="cm-cell diag"><span class="n">39</span><span class="lbl">TP</span></div>
+        </div>
+      </div>
+
+      <!-- Decision Tree -->
+      <div class="cm-block">
+        <div class="cm-title">Árbol — Datos de Prueba</div>
+        <div class="cm-grid">
+          <div class="cm-axlabel"></div>
+          <div class="cm-axlabel" style="font-size:.6rem">Pred: Buena</div>
+          <div class="cm-axlabel" style="font-size:.6rem">Pred: Reg.</div>
+          <div class="cm-axlabel" style="font-size:.6rem">Pred: Mala</div>
+
+          <div class="cm-axlabel" style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:.58rem">Real: Buena</div>
+          <div class="cm-cell diag"><span class="n">1797</span><span class="lbl">TN</span></div>
+          <div class="cm-cell off2"><span class="n">137</span><span class="lbl">err</span></div>
+          <div class="cm-cell off2"><span class="n">7</span><span class="lbl">err</span></div>
+
+          <div class="cm-axlabel" style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:.58rem">Real: Reg.</div>
+          <div class="cm-cell off"><span class="n">308</span><span class="lbl">err</span></div>
+          <div class="cm-cell diag"><span class="n">223</span><span class="lbl">TP</span></div>
+          <div class="cm-cell off2"><span class="n">22</span><span class="lbl">err</span></div>
+
+          <div class="cm-axlabel" style="writing-mode:vertical-lr;transform:rotate(180deg);font-size:.58rem">Real: Mala</div>
+          <div class="cm-cell off"><span class="n">38</span><span class="lbl">err</span></div>
+          <div class="cm-cell off"><span class="n">59</span><span class="lbl">err</span></div>
+          <div class="cm-cell diag"><span class="n">36</span><span class="lbl">TP</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison bars -->
+    <h3>Comparativa de Métricas</h3>
+    <div style="margin:1.5rem 0">
+      <div class="comp-row">
+        <span class="comp-label">Exactitud global</span>
+        <div class="comp-bars">
+          <div class="comp-bar lda" style="width:77%">LDA 0.7697</div>
+          <div class="comp-bar dt"  style="width:78.3%">Árbol 0.7826 ★</div>
+        </div>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">Precisión macro</span>
+        <div class="comp-bars">
+          <div class="comp-bar lda" style="width:58.4%">LDA 0.5835</div>
+          <div class="comp-bar dt"  style="width:64.2%">Árbol 0.6415 ★</div>
+        </div>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">Recall macro</span>
+        <div class="comp-bars">
+          <div class="comp-bar lda" style="width:49.4%">LDA 0.4935</div>
+          <div class="comp-bar dt"  style="width:53.3%">Árbol 0.5332 ★</div>
+        </div>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">F1 macro</span>
+        <div class="comp-bars">
+          <div class="comp-bar lda" style="width:51.4%">LDA 0.5143</div>
+          <div class="comp-bar dt"  style="width:56.8%">Árbol 0.5675 ★</div>
+        </div>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">F1 — Regular</span>
+        <div class="comp-bars">
+          <div class="comp-bar lda" style="width:32%">LDA 0.320</div>
+          <div class="comp-bar dt"  style="width:45.9%">Árbol 0.459 ★</div>
+        </div>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">F1 — Mala</span>
+        <div class="comp-bars">
+          <div class="comp-bar lda" style="width:34.5%">LDA 0.345</div>
+          <div class="comp-bar dt"  style="width:36.4%">Árbol 0.364 ★</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Métrica</th><th>LDA</th><th>Árbol de Decisión</th><th>Ganador</th></tr></thead>
+        <tbody>
+          <tr><td>Exactitud global</td><td class="lose">0.7697</td><td class="win">0.7826</td><td class="g">Árbol ✓</td></tr>
+          <tr><td>Precisión macro</td><td class="lose">0.5835</td><td class="win">0.6415</td><td class="g">Árbol ✓</td></tr>
+          <tr><td>Recall macro</td><td class="lose">0.4935</td><td class="win">0.5332</td><td class="g">Árbol ✓</td></tr>
+          <tr><td>F1-Score macro</td><td class="lose">0.5143</td><td class="win">0.5675</td><td class="g">Árbol ✓</td></tr>
+          <tr><td>F1 — Buena</td><td class="lose">0.8773</td><td class="win">0.8800</td><td class="g">Árbol ✓</td></tr>
+          <tr><td>F1 — Regular</td><td class="lose">0.3204</td><td class="win">0.4588</td><td class="g">Árbol ✓</td></tr>
+          <tr><td>F1 — Mala</td><td class="lose">0.3451</td><td class="win">0.3636</td><td class="g">Árbol ✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout g">
+      <strong>El Árbol de Decisión supera a LDA en todas las métricas.</strong> La ventaja más notable es en F1 para la clase "Regular" (+14 pp), donde LDA comete muchos errores por el traslape entre clases que sus fronteras lineales no pueden resolver bien.
+    </div>
+
+    <div class="callout r">
+      <strong>Ambos modelos fallan más en la clase "Mala".</strong> Con solo 133 casos en el conjunto de prueba y fronteras borrosas, ambos clasificadores se quedan cortos detectando los episodios más críticos. Desde la perspectiva de salud pública, este es el punto más urgente a mejorar.
+    </div>
+  </section>
+
+  <!-- ── 07 CONCLUSIONES ── -->
+  <section id="conclusiones">
+    <div class="section-label">07 · Conclusiones</div>
+    <h2>Síntesis y Aprendizajes</h2>
+
+    <ul class="conclusion-list">
+      <li>
+        <span class="icon">🌳</span>
+        <div class="text">
+          <strong>El Árbol de Decisión es el mejor modelo en este problema.</strong> Gana en todas las métricas: accuracy (0.7826 vs 0.7697), F1 macro (0.5675 vs 0.5143) y especialmente en la clase Regular (+14 pp). La razón clave: el árbol puede capturar interacciones no lineales entre variables como "CO alto Y temperatura alta → calidad Mala", que las fronteras lineales de LDA no logran representar.
+        </div>
+      </li>
+      <li>
+        <span class="icon">📏</span>
+        <div class="text">
+          <strong>LDA falla por sus supuestos matemáticos.</strong> Los contaminantes del aire tienen distribuciones con colas largas (eventos extremos infrecuentes), no siguen exactamente una distribución normal. Además las clases probablemente no tienen la misma varianza interna. Cuando los supuestos se violan, la frontera lineal que propone LDA no es la óptima.
+        </div>
+      </li>
+      <li>
+        <span class="icon">✂️</span>
+        <div class="text">
+          <strong>La poda es esencial en el árbol.</strong> Sin poda el árbol memoriza el entrenamiento (≈100% accuracy en train) y generaliza mal. La poda CCP con alpha=0.000617 reduce el árbol de cientos de hojas a 68, equilibrando complejidad y generalización. Siempre hay que encontrar este balance.
+        </div>
+      </li>
+      <li>
+        <span class="icon">🏭</span>
+        <div class="text">
+          <strong>CO es el predictor dominante (33.1%).</strong> Esto tiene sentido físico: el monóxido de carbono es subproducto directo de la combustión incompleta de vehículos e industria, y en Monterrey se correlaciona fuertemente con PM2.5. Es el primer nodo del árbol no por coincidencia, sino por física atmosférica.
+        </div>
+      </li>
+      <li>
+        <span class="icon">⚠️</span>
+        <div class="text">
+          <strong>La clase "Mala" sigue siendo el talón de Aquiles de ambos modelos.</strong> Con F1 de apenas 0.36 (árbol) y 0.35 (LDA), ambos detectan menos de la mitad de los episodios críticos. Esto se debe al desbalance (5% del dataset) y a la dificultad inherente de separar estas observaciones. Próximos pasos: oversampling (SMOTE), class_weight, o modelos ensemble como Random Forest.
+        </div>
+      </li>
+      <li>
+        <span class="icon">🔬</span>
+        <div class="text">
+          <strong>Accuracy no es suficiente con clases desbalanceadas.</strong> Un modelo que siempre predijera "Buena" alcanzaría 73.9% de accuracy sin aprender nada. Por eso el F1-Score macro (que pondera por igual a las tres clases) es la métrica más informativa en este contexto.
+        </div>
+      </li>
+    </ul>
+
+    <!-- References -->
+    <h3>Referencias</h3>
+    <div class="refs">
+      <p>• NOM-025-SSA1-2021. Criterio para evaluar la calidad del aire ambiente — PM2.5. Secretaría de Salud, DOF 27 oct 2021.</p>
+      <p>• NOM-172-SEMARNAT-2023. Lineamientos para el Índice AIRE y SALUD. SEMARNAT, vigente jul 2024.</p>
+      <p>• IBM (2025). What Is Linear Discriminant Analysis? <em>IBM Think.</em></p>
+      <p>• Raschka, S. (2014). Linear Discriminant Analysis. sebastianraschka.com</p>
+      <p>• scikit-learn. Linear and Quadratic Discriminant Analysis; Decision Trees. scikit-learn.org</p>
+      <p>• Máxima Formación (2025). Qué son los árboles de decisión y para qué sirven.</p>
+      <p>• Bookdown (s.f.). Árboles de Decisión y Random Forest. bookdown.org</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>Tarea 5 · A2.2 LDA y Árboles de Decisión</span>
+  <span style="font-family:'Playfair Display',serif;font-style:italic;font-size:.8rem">SC3314 IA · Dr. Antonio Martínez Torteya · UDEM</span>
+  <span>sklearn · pandas · numpy · scipy</span>
+</footer>
+
+<script>
+  // Section reveal
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.07 });
+  document.querySelectorAll('section').forEach(s => obs.observe(s));
+
+  // Animate bars on scroll into view
+  function animateBars(section, selector) {
+    const secEl = document.getElementById(section);
+    if (!secEl) return;
+    const bObs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        document.querySelectorAll(selector).forEach(b => {
+          const w = b.style.width;
+          b.style.width = '0';
+          setTimeout(() => { b.style.width = w; }, 80);
+        });
+        bObs.disconnect();
+      }
+    }, { threshold: 0.2 });
+    bObs.observe(secEl);
+  }
+
+  animateBars('importancia', '.fi-bar-fill');
+  animateBars('clases', '.dist-bar-fill');
+  animateBars('comparacion', '.comp-bar');
+</script>
+</body>
+</html>
